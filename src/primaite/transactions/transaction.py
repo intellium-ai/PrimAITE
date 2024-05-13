@@ -29,7 +29,7 @@ class Transaction(object):
         "The episode number"
         self.step_number: int = step_number
         "The step number"
-        self.obs_space: spaces.Space | None = None
+        self.obs_space: "spaces.Space" = None
         "The observation space (pre)"
         self.obs_space_pre: Optional[Union["np.ndarray", Tuple["np.ndarray"]]] = None
         "The observation space before any actions are taken"
@@ -57,9 +57,6 @@ class Transaction(object):
         action_header = []
         for x in range(action_length):
             action_header.append("AS_" + str(x))
-
-        if len(action_header) == 0:
-            action_header.append("AS_empty_n/a")
 
         # Open up a csv file
         header = ["Timestamp", "Episode", "Step", "Reward"]
