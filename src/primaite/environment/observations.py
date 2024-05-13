@@ -225,8 +225,8 @@ class NodeStatuses(AbstractObservationComponent):
 
         # 1. Define the shape of your observation space component
         node_shape = [
-            len(HardwareState) + 1,
-            len(SoftwareState) + 1,
+            len(HardwareState),
+            len(SoftwareState),
             len(FileSystemState) + 1,
         ]
         services_shape = [len(SoftwareState) + 1] * self.env.num_services
@@ -279,10 +279,8 @@ class NodeStatuses(AbstractObservationComponent):
 
         for _, node in self.env.nodes.items():
             node_id = node.node_id
-            structure.append(f"node_{node_id}_hardware_state_NONE")
             for state in HardwareState:
                 structure.append(f"node_{node_id}_hardware_state_{state.name}")
-            structure.append(f"node_{node_id}_software_state_NONE")
             for state in SoftwareState:
                 structure.append(f"node_{node_id}_software_state_{state.name}")
             structure.append(f"node_{node_id}_file_system_state_NONE")
@@ -556,27 +554,34 @@ class AccessControlList(AbstractObservationComponent):
     def generate_structure(self) -> List[str]:
         """Return a list of labels for the components of the flattened observation space."""
         structure = []
-        for acl_rule in self.env.acl.acl:
-            acl_rule_id = self.env.acl.acl.index(acl_rule)
+        for i in range(self.env.max_number_acl_rules):
+            acl_rule_id = i
 
             for permission in RulePermissionType:
                 structure.append(f"acl_rule_{acl_rule_id}_permission_{permission.name}")
 
+            structure.append(f"acl_rule_{acl_rule_id}_source_ip_NONE")
             structure.append(f"acl_rule_{acl_rule_id}_source_ip_ANY")
             for node in self.env.nodes.keys():
                 structure.append(f"acl_rule_{acl_rule_id}_source_ip_{node}")
 
+            structure.append(f"acl_rule_{acl_rule_id}_dest_ip_NONE")
             structure.append(f"acl_rule_{acl_rule_id}_dest_ip_ANY")
             for node in self.env.nodes.keys():
                 structure.append(f"acl_rule_{acl_rule_id}_dest_ip_{node}")
 
+            structure.append(f"acl_rule_{acl_rule_id}_service_NONE")
             structure.append(f"acl_rule_{acl_rule_id}_service_ANY")
             for service in self.env.services_list:
                 structure.append(f"acl_rule_{acl_rule_id}_service_{service}")
 
+            structure.append(f"acl_rule_{acl_rule_id}_port_NONE")
             structure.append(f"acl_rule_{acl_rule_id}_port_ANY")
             for port in self.env.ports_list:
                 structure.append(f"acl_rule_{acl_rule_id}_port_{port}")
+
+            for j in range(self.env.max_number_acl_rules):
+                structure.append(f"acl_rule_{acl_rule_id}_position_{j}")
 
         return structure
 

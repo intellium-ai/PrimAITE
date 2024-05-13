@@ -28,6 +28,7 @@ from primaite.common.enums import (
     NodeType,
     ObservationType,
     Priority,
+    RulePermissionType,
     SessionType,
     SoftwareState,
 )
@@ -595,9 +596,9 @@ class Primaite(Env):
             # It's decided to create a new ACL rule or remove an existing rule
             # Permission value
             if action_permission == 0:
-                acl_rule_permission = "DENY"
+                acl_rule_permission = RulePermissionType.DENY
             else:
-                acl_rule_permission = "ALLOW"
+                acl_rule_permission = RulePermissionType.ALLOW
             # Source IP value
             if action_source_ip == 0:
                 acl_rule_source = "ANY"
@@ -1027,7 +1028,7 @@ class Primaite(Env):
         Args:
             item: A config data item
         """
-        acl_rule_permission = item["permission"]
+        acl_rule_permission = RulePermissionType[item["permission"]]
         acl_rule_source = item["source"]
         acl_rule_destination = item["destination"]
         acl_rule_protocol = item["protocol"]
