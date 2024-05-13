@@ -11,6 +11,7 @@ from primaite.common.enums import (
     NodePOLType,
     NodeSoftwareAction,
     SoftwareState,
+    RulePermissionType,
 )
 
 
@@ -106,7 +107,7 @@ def is_valid_node_action(action: List[int]) -> bool:
     return True
 
 
-def is_valid_acl_action(action: List[int]) -> bool:
+def is_valid_acl_action(action: List[int], implicit_permission: RulePermissionType) -> bool:
     """
     Is the ACL action an actual valid action.
 
@@ -134,15 +135,18 @@ def is_valid_acl_action(action: List[int]) -> bool:
     if action_source_id == action_destination_id and action_source_id != "ANY" and action_destination_id != "ANY":
         # ACL rule towards itself
         return False
-    if action_permission == "DENY":
+    if action_permission == "DENY" and implicit_permission == RulePermissionType.DENY:
         # DENY is unnecessary, we can create and delete allow rules instead
         # No allow rule = blocked/DENY by feault. ALLOW overrides existing DENY.
+        return False
+    elif action_permission == "ALLOW" and implicit_permission == RulePermissionType.ALLOW:
+        # Same reason as above.
         return False
 
     return True
 
 
-def is_valid_acl_action_extra(action: List[int]) -> bool:
+def is_valid_acl_action_extra(action: List[int], implicit_permission: RulePermissionType) -> bool:
     """
     Harsher version of valid acl actions, does not allow action.
 
@@ -152,7 +156,7 @@ def is_valid_acl_action_extra(action: List[int]) -> bool:
     :return: Whether the action is valid
     :rtype: bool
     """
-    if is_valid_acl_action(action) is False:
+    if is_valid_acl_action(action, implicit_permission=implicit_permission) is False:
         return False
 
     action_r = transform_action_acl_readable(action)
@@ -303,7 +307,7 @@ def describe_obs_change(
             relevant_changes = np.where(row != 0, obs2[n], -1)
             relevant_changes[0] = obs2[n, 0]  # ID is always relevant
             is_link = relevant_changes[0] > num_nodes
-            desc = _describe_obs_change_helper(relevant_changes, is_link)
+            desc = _describe_obs_change_helper(list(relevant_changes), is_link)
             list_of_changes.append(desc)
 
     change_string = "\n ".join(list_of_changes)
@@ -336,11 +340,11 @@ def _describe_obs_change_helper(obs_change: List[int], is_link: bool) -> str:
     NodePOLTypes = [NodePOLType(i).name if i < 3 else NodePOLType(3).name + " " + str(i - 3) for i in index_changed]
     # Account for hardware states, software sattes and links
     states = [
-        LinkStatus(obs_change[i]).name
-        if is_link
-        else HardwareState(obs_change[i]).name
-        if i == 1
-        else SoftwareState(obs_change[i]).name
+        (
+            LinkStatus(obs_change[i]).name
+            if is_link
+            else HardwareState(obs_change[i]).name if i == 1 else SoftwareState(obs_change[i]).name
+        )
         for i in index_changed
     ]
 
@@ -365,12 +369,12 @@ def transform_action_node_enum(action: List[Union[str, int]]) -> List[int]:
     :rtype: List[int]
     """
     action_node_id = action[0]
-    action_node_property = NodePOLType[action[1]].value
+    action_node_property = NodePOLType[str(action[1])].value
 
     if action[1] == "OPERATING":
-        property_action = NodeHardwareAction[action[2]].value
+        property_action = NodeHardwareAction[str(action[2])].value
     elif action[1] == "OS" or action[1] == "SERVICE":
-        property_action = NodeSoftwareAction[action[2]].value
+        property_action = NodeSoftwareAction[str(action[2])].value
     else:
         property_action = 0
 
@@ -398,8 +402,8 @@ def transform_action_acl_enum(action: List[Union[int, str]]) -> np.ndarray:
     action_decisions = {"NONE": 0, "CREATE": 1, "DELETE": 2}
     action_permissions = {"DENY": 0, "ALLOW": 1}
 
-    action_decision = action_decisions[action[0]]
-    action_permission = action_permissions[action[1]]
+    action_decision = action_decisions[str(action[0])]
+    action_permission = action_permissions[str(action[1])]
 
     # For IPs, Ports and Protocols, ANY has value 0, otherwise its just an index
     new_action = [action_decision, action_permission] + list(action[2:6])
@@ -427,6 +431,7 @@ def get_node_of_ip(ip: str, node_dict: Dict[str, NodeUnion]) -> str:
         node_ip = node_value.ip_address
         if node_ip == ip:
             return node_key
+    return ""
 
 
 def get_new_action(old_action: np.ndarray, action_dict: Dict[int, List]) -> int:

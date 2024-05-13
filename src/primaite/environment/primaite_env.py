@@ -159,7 +159,7 @@ class Primaite(Env):
         """The total number of time steps completed."""
 
         # Create step info dictionary
-        self.step_info: Dict[Any] = {}
+        self.step_info: Dict[Any, Any] = {}
 
         # Total reward
         self.total_reward: float = 0
@@ -196,7 +196,7 @@ class Primaite(Env):
         # It will be initialised later.
         self.obs_handler: ObservationsHandler
 
-        self._obs_space_description: List[str] = None
+        self._obs_space_description: List[str] | None = None
         "The env observation space description for transactions writing"
 
         self.lay_down_config = load(self._lay_down_config_path, self.legacy_lay_down_config)
@@ -1257,7 +1257,9 @@ class Primaite(Env):
                                     ]
                                     # Check to see if it is an action we want to include as possible
                                     # i.e. not a nothing action
-                                    if is_valid_acl_action_extra(action):
+                                    if is_valid_acl_action_extra(
+                                        action, implicit_permission=self.acl.acl_implicit_permission
+                                    ):
                                         actions[action_key] = action
                                         action_key += 1
 
