@@ -46,20 +46,20 @@ deterministic: False
 # Options are:
 # "BASIC" (The current observation space only)
 # "FULL" (Full environment view with actions taken and reward feedback)
-hard_coded_agent_view: FULL
+hard_coded_agent_view: BASIC
 
 # Sets How the Action Space is defined:
 # "NODE"
 # "ACL"
 # "ANY" node and acl actions
-action_type: ACL
+action_type: NODE
 
 # observation space
 observation_space:
   flatten: false
   components:
     - name: NODE_LINK_TABLE
-    # - name: NODE_STATUSES
+    - name: NODE_STATUSES
     # - name: LINK_TRAFFIC_LEVELS
 
 # Number of episodes for training to run per session

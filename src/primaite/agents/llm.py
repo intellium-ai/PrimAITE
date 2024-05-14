@@ -27,12 +27,9 @@ class LLM:
 
     def predict(self, observation: np.ndarray, deterministic: bool, **kwargs) -> int:
 
-        max_new_tokens = kwargs.pop("max_new_tokens", 64)
-        repetition_penalty = kwargs.pop("repetition_penalty", 1.5)
-
         grammar = Grammar(type=GrammarType.Json, value=Action.model_json_schema())
         prompt = f"""
-        Predict the best action to take based on the following observation space
+        Predict the best action to take based on the following observation space. This should be an integer greater than 0. Provide your answer in json format.
         
         {observation}
         
@@ -42,12 +39,17 @@ class LLM:
         response = self.client.generate(
             prompt=prompt,
             grammar=grammar,
-            do_sample=deterministic,
-            repetition_penalty=repetition_penalty,
-            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            repetition_penalty=1.5,
+            max_new_tokens=128,
         )
-        action = Action(**json.loads(response.generated_text))
-        return action.chosen_action
+        try:
+            action = Action(**json.loads(response.generated_text))
+            return action.chosen_action
+
+        except Exception:
+            print(response.generated_text)
+            raise Exception
 
 
 class LLMAgent(AgentSessionABC):
@@ -113,16 +115,10 @@ class LLMAgent(AgentSessionABC):
             obs = self._env.reset()
 
             for _ in range(time_steps):
-                action = self._agent.predict(obs, deterministic=self._training_config.deterministic, **kwargs)
-                new_obs, rewards, done, info = self._env.step(action=action)
-                _LOGGER.info(obs)
-                msg = describe_obs_change(
-                    obs1=obs,
-                    obs2=new_obs,
-                    num_nodes=self._env.num_nodes,
-                    num_links=self._env.num_links,
-                    num_services=self._env.num_services,
-                )
+                # action = self._agent.predict(obs, deterministic=self._training_config.deterministic, **kwargs)
+                new_obs, rewards, done, info = self._env.step(action=0)
+
+                msg = transform_obs_readable(obs=obs)
                 _LOGGER.info(msg=msg)
                 obs = new_obs
 

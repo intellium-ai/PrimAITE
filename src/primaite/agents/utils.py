@@ -299,8 +299,9 @@ def describe_obs_change(
     :return: A multi-line string with a human-readable description of the difference.
     :rtype: str
     """
-    obs1 = convert_to_old_obs(obs1, num_nodes, num_links, num_services)
-    obs2 = convert_to_old_obs(obs2, num_nodes, num_links, num_services)
+    print(obs1.shape)
+    # obs1 = convert_to_old_obs(obs1, num_nodes, num_links, num_services)
+    # obs2 = convert_to_old_obs(obs2, num_nodes, num_links, num_services)
     list_of_changes = []
     for n, row in enumerate(obs1 - obs2):
         if row.any() != 0:

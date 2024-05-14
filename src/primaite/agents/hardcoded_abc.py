@@ -9,6 +9,7 @@ import numpy as np
 from primaite import getLogger
 from primaite.agents.agent_abc import AgentSessionABC
 from primaite.environment.primaite_env import Primaite
+from primaite.agents.utils import describe_obs_change
 
 _LOGGER = getLogger(__name__)
 
@@ -90,22 +91,35 @@ class HardCodedAgentSessionABC(AgentSessionABC):
         time_steps = self._training_config.num_eval_steps
         episodes = self._training_config.num_eval_episodes
 
-        obs = self._env.reset()
         for episode in range(episodes):
+            obs = self._env.reset()
             # Reset env and collect initial observation
             for step in range(time_steps):
                 # Calculate action
                 action = self._calculate_action(obs)
 
                 # Perform the step
-                obs, reward, done, info = self._env.step(action)
+                new_obs, reward, done, info = self._env.step(action)
+                _LOGGER.info(action)
+
+                # msg = describe_obs_change(
+                #     obs1=obs,
+                #     obs2=new_obs,
+                #     num_nodes=self._env.num_nodes,
+                #     num_links=self._env.num_links,
+                #     num_services=self._env.num_services,
+                # )
+
+                # _LOGGER.info(msg=msg)
 
                 if done:
                     break
 
+                obs = new_obs
+
                 # Introduce a delay between steps
                 time.sleep(self._training_config.time_delay / 1000)
-            obs = self._env.reset()
+
         self._env.close()
 
     @classmethod
