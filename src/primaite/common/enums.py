@@ -135,9 +135,9 @@ class AgentIdentifier(Enum):
 class HardCodedAgentView(Enum):
     """The view the deterministic hard-coded agent has of the environment."""
 
-    BASIC = 1
+    BASIC = "BASIC"
     "The current observation space only"
-    FULL = 2
+    FULL = "FULL"
     "Full environment view with actions taken and reward feedback"
 
 

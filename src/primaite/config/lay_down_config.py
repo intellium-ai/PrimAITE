@@ -51,7 +51,7 @@ def convert_legacy_lay_down_config(legacy_config: List[Dict[str, Any]]) -> List[
     return new_config
 
 
-def load(file_path: Union[str, Path], legacy_file: bool = False) -> Dict[str, Any] | Any:
+def load(file_path: Union[str, Path], legacy_file: bool = False):
     """
     Read in a lay down config yaml file.
 

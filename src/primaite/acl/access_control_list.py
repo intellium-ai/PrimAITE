@@ -188,11 +188,12 @@ class AccessControlList:
         """
         relevant_rules = {}
         for rule in self.acl:
-            if self.check_address_match(rule, _source_ip_address, _dest_ip_address):
-                if (rule.get_protocol() == _protocol or rule.get_protocol() == "ANY" or _protocol == "ANY") and (
-                    str(rule.get_port()) == str(_port) or rule.get_port() == "ANY" or str(_port) == "ANY"
-                ):
-                    # There's a matching rule.
-                    relevant_rules[self._acl.index(rule)] = rule
+            if rule is not None:
+                if self.check_address_match(rule, _source_ip_address, _dest_ip_address):
+                    if (rule.get_protocol() == _protocol or rule.get_protocol() == "ANY" or _protocol == "ANY") and (
+                        rule.get_port() == _port or rule.get_port() == "ANY" or _port == "ANY"
+                    ):
+                        # There's a matching rule.
+                        relevant_rules[self._acl.index(rule)] = rule
 
         return relevant_rules

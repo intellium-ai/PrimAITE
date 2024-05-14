@@ -13,17 +13,20 @@ from primaite.agents.utils import (
     transform_change_obs_readable,
 )
 from primaite.common.custom_typing import NodeUnion
-from primaite.common.enums import HardCodedAgentView
+from primaite.common.enums import HardCodedAgentView, RulePermissionType
 from primaite.nodes.active_node import ActiveNode
 from primaite.nodes.service_node import ServiceNode
 from primaite.pol.ier import IER
+from primaite import getLogger
+
+_LOGGER = getLogger(__name__)
 
 
 class HardCodedACLAgent(HardCodedAgentSessionABC):
     """An Agent Session class that implements a deterministic ACL agent."""
 
     def _calculate_action(self, obs: np.ndarray) -> int:
-        if self._training_config.hard_coded_agent_view == HardCodedAgentView.BASIC:
+        if self._training_config.hard_coded_agent_view == HardCodedAgentView.BASIC.value:
             # Basic view action using only the current observation
             return self._calculate_action_basic_view(obs)
         else:
@@ -130,7 +133,7 @@ class HardCodedACLAgent(HardCodedAgentSessionABC):
 
         allowed_rules = {}
         for rule_key, rule_value in matching_rules.items():
-            if rule_value.get_permission() == "ALLOW":
+            if rule_value.get_permission() == RulePermissionType.ALLOW:
                 allowed_rules[rule_key] = rule_value
 
         return allowed_rules

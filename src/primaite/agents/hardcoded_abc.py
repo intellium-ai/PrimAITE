@@ -40,6 +40,10 @@ class HardCodedAgentSessionABC(AgentSessionABC):
         self._setup()
 
     def _setup(self) -> None:
+
+        if not isinstance(self.session_path, Path):
+            self.session_path = Path(self.session_path)
+
         self._env: Primaite = Primaite(
             training_config_path=self._training_config_path,
             lay_down_config_path=self._lay_down_config_path,
@@ -68,7 +72,7 @@ class HardCodedAgentSessionABC(AgentSessionABC):
         _LOGGER.warning("Deterministic agents cannot learn")
 
     @abstractmethod
-    def _calculate_action(self, obs: np.ndarray) -> None:
+    def _calculate_action(self, obs: np.ndarray) -> int:
         pass
 
     def evaluate(
@@ -105,7 +109,7 @@ class HardCodedAgentSessionABC(AgentSessionABC):
         self._env.close()
 
     @classmethod
-    def load(cls, path: Union[str, Path] = None) -> None:
+    def load(cls, path: Union[str, Path] | None = None) -> None:
         """Load an agent from file."""
         _LOGGER.warning("Deterministic agents cannot be loaded")
 

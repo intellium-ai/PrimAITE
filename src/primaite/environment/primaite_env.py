@@ -25,6 +25,7 @@ from primaite.common.enums import (
     HardwareState,
     NodePOLInitiator,
     NodePOLType,
+    RulePermissionType,
     NodeType,
     ObservationType,
     Priority,
@@ -595,9 +596,9 @@ class Primaite(Env):
             # It's decided to create a new ACL rule or remove an existing rule
             # Permission value
             if action_permission == 0:
-                acl_rule_permission = "DENY"
+                acl_rule_permission = RulePermissionType.DENY
             else:
-                acl_rule_permission = "ALLOW"
+                acl_rule_permission = RulePermissionType.ALLOW
             # Source IP value
             if action_source_ip == 0:
                 acl_rule_source = "ANY"
@@ -1032,7 +1033,7 @@ class Primaite(Env):
         acl_rule_destination = item["destination"]
         acl_rule_protocol = item["protocol"]
         acl_rule_port = item["port"]
-        acl_rule_position = item.get("position")
+        acl_rule_position = item["position"]
 
         self.acl.add_rule(
             acl_rule_permission,
@@ -1258,7 +1259,8 @@ class Primaite(Env):
                                     # Check to see if it is an action we want to include as possible
                                     # i.e. not a nothing action
                                     if is_valid_acl_action_extra(
-                                        action, implicit_permission=self.acl.acl_implicit_permission
+                                        action,
+                                        implicit_permission=self.acl.acl_implicit_permission,
                                     ):
                                         actions[action_key] = action
                                         action_key += 1

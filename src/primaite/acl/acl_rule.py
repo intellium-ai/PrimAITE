@@ -41,7 +41,7 @@ class ACLRule:
             )
         )
 
-    def get_permission(self) -> str:
+    def get_permission(self) -> RulePermissionType:
         """
         Gets the permission attribute.
 
