@@ -129,6 +129,7 @@ class AgentIdentifier(Enum):
     "The RandomAgent"
     DUMMY = 6
     "The DummyAgent"
+    LLM = 7
 
 
 class HardCodedAgentView(Enum):

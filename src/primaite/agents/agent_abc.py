@@ -178,7 +178,7 @@ class AgentSessionABC(ABC):
         }
         filepath = self.session_path / "session_metadata.json"
         _LOGGER.debug(f"Writing Session Metadata file: {filepath}")
-        with open(filepath, "w") as file:
+        with open(filepath, "w+") as file:
             json.dump(metadata_dict, file)
             _LOGGER.debug("Finished writing session metadata file")
 
