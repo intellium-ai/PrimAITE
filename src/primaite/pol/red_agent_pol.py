@@ -3,7 +3,6 @@
 from typing import Dict
 
 from networkx import MultiGraph, shortest_path
-
 from primaite import getLogger
 from primaite.acl.access_control_list import AccessControlList
 from primaite.common.custom_typing import NodeUnion

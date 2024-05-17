@@ -24,13 +24,13 @@ deep_learning_framework: TF2
 # "DO_NOTHING" (The DoNothing agents coupled with an ACL or NODE action_type)
 # "RANDOM" (primaite.agents.simple.RandomAgent)
 # "DUMMY" (primaite.agents.simple.DummyAgent)
-agent_identifier: HARDCODED
+agent_identifier: LLM
 
 # Sets whether Red Agent POL and IER is randomised.
 # Options are:
 # True
 # False
-random_red_agent: False
+random_red_agent: True
 
 # The (integer) seed to be used in random number generation
 # Default is None (null)
@@ -56,11 +56,11 @@ action_type: NODE
 
 # observation space
 observation_space:
-  flatten: false
   components:
-    - name: NODE_LINK_TABLE
+    #- name: NODE_LINK_TABLE
     - name: NODE_STATUSES
     # - name: LINK_TRAFFIC_LEVELS
+    # - name: ACCESS_CONTROL_LIST
 
 # Number of episodes for training to run per session
 num_train_episodes: 500

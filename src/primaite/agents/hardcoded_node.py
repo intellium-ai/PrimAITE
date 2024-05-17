@@ -8,6 +8,9 @@ from primaite.agents.utils import (
     transform_change_obs_readable,
     convert_to_old_obs,
 )
+from primaite import getLogger
+
+_LOGGER = getLogger(__name__)
 
 
 class HardCodedNodeAgent(HardCodedAgentSessionABC):
@@ -23,12 +26,6 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
         :rtype: int
         """
         action_dict = self._env.action_dict
-        obs = convert_to_old_obs(
-            obs=obs,
-            num_nodes=self._env.num_nodes,
-            num_links=self._env.num_links,
-            num_services=self._env.num_services,
-        )
         r_obs = transform_change_obs_readable(obs)
         _, o, os, *s = r_obs
 

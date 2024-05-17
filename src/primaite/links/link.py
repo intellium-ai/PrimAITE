@@ -8,7 +8,14 @@ from primaite.common.protocol import Protocol
 class Link(object):
     """Link class."""
 
-    def __init__(self, _id: str, _bandwidth: int, _source_node_name: str, _dest_node_name: str, _services: str) -> None:
+    def __init__(
+        self,
+        _id: str,
+        _bandwidth: int,
+        _source_node_name: str,
+        _dest_node_name: str,
+        _services: List[str],
+    ) -> None:
         """
         Initialise a Link within the simulated network.
 

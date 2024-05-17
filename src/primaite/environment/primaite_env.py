@@ -148,10 +148,10 @@ class Primaite(Env):
         self.ports_list: List[str] = []
 
         # Create graph (network)
-        self.network: nx.Graph = nx.MultiGraph()
+        self.network: nx.MultiGraph = nx.MultiGraph()
 
         # Create a graph (network) reference
-        self.network_reference: nx.Graph = nx.MultiGraph()
+        self.network_reference: nx.MultiGraph = nx.MultiGraph()
 
         # Create step count
         self.step_count: int = 0
@@ -160,7 +160,7 @@ class Primaite(Env):
         """The total number of time steps completed."""
 
         # Create step info dictionary
-        self.step_info: Dict[Any, Any] = {}
+        self.step_info: Dict[str, Any] = {}
 
         # Total reward
         self.total_reward: float = 0
@@ -462,7 +462,7 @@ class Primaite(Env):
         for link_key, link_value in self.links.items():
             _LOGGER.debug("Link ID: " + link_value.get_id())
             for protocol in link_value.protocol_list:
-                print("    Protocol: " + protocol.get_name().name + ", Load: " + str(protocol.get_load()))
+                print("    Protocol: " + protocol.get_name() + ", Load: " + str(protocol.get_load()))
 
     def interpret_action_and_apply(self, _action: int) -> None:
         """
@@ -595,6 +595,9 @@ class Primaite(Env):
         else:
             # It's decided to create a new ACL rule or remove an existing rule
             # Permission value
+
+            acl_rule_position = str(acl_rule_position)
+
             if action_permission == 0:
                 acl_rule_permission = RulePermissionType.DENY
             else:
@@ -748,7 +751,6 @@ class Primaite(Env):
                 pass
 
         _LOGGER.info("Environment configuration loaded")
-        print("Environment configuration loaded")
 
     def create_node(self, item: Dict) -> None:
         """
@@ -1077,26 +1079,6 @@ class Primaite(Env):
         # Set the number of ports
         self.num_ports = len(self.ports_list)
 
-    # TODO: this is not used anymore, write a ticket to delete it
-    def get_observation_info(self, observation_info: Dict) -> None:
-        """
-        Extracts observation_info.
-
-        :param observation_info: Config item that defines which type of observation space to use
-        :type observation_info: str
-        """
-        self.observation_type = ObservationType[observation_info["type"]]
-
-    # TODO: this is not used anymore, write a ticket to delete it.
-    def get_action_info(self, action_info: Dict) -> None:
-        """
-        Extracts action_info.
-
-        Args:
-            item: A config data item representing action info
-        """
-        self.action_type = ActionType[action_info["type"]]
-
     def save_obs_config(self, obs_config: dict) -> None:
         """
         Cache the config for the observation space.
@@ -1156,6 +1138,8 @@ class Primaite(Env):
 
         if node_class == "ACTIVE":
             # Active nodes have Software State
+            assert isinstance(node, ActiveNode)
+            assert isinstance(node_ref, ActiveNode)
             node_software_state = SoftwareState[item["software_state"]]
             node_file_system_state = FileSystemState[item["file_system_state"]]
             node.software_state = node_software_state
@@ -1164,6 +1148,8 @@ class Primaite(Env):
             node_ref.set_file_system_state(node_file_system_state)
         elif node_class == "SERVICE":
             # Service nodes have Software State and list of services
+            assert isinstance(node, ServiceNode)
+            assert isinstance(node_ref, ServiceNode)
             node_software_state = SoftwareState[item["software_state"]]
             node_file_system_state = FileSystemState[item["file_system_state"]]
             node.software_state = node_software_state

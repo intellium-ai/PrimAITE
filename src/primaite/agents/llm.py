@@ -1,4 +1,3 @@
-import json
 from logging import Logger
 from pathlib import Path
 from typing import Any
@@ -12,7 +11,8 @@ from primaite import getLogger
 from primaite.agents.agent_abc import AgentSessionABC
 from primaite.common.enums import AgentFramework, AgentIdentifier
 from primaite.environment.primaite_env import Primaite
-from primaite.agents.utils import describe_obs_change, transform_obs_readable, convert_to_new_obs, convert_to_old_obs
+from primaite.agents.utils import transform_obs_readable
+from primaite.agents.llm_utils import nodestatus_to_understandable, nodelink_to_understandable
 
 _LOGGER: Logger = getLogger(__name__)
 
@@ -22,34 +22,48 @@ class Action(BaseModel):
 
 
 class LLM:
-    def __init__(self, base_url: str, timeout: int = 20) -> None:
+    def __init__(self, base_url: str, timeout: int = 60) -> None:
         self.client = Client(base_url=base_url, timeout=timeout)
 
-    def predict(self, observation: np.ndarray, deterministic: bool, **kwargs) -> int:
+    def predict(
+        self,
+        observation: np.ndarray,
+        deterministic: bool,
+        num_nodes: int,
+        num_links: int,
+        num_services: int,
+    ) -> str:
 
-        grammar = Grammar(type=GrammarType.Json, value=Action.model_json_schema())
-        prompt = f"""
-        Predict the best action to take based on the following observation space. This should be an integer greater than 0. Provide your answer in json format.
+        r_obs = nodestatus_to_understandable(
+            observation,
+            num_nodes=num_nodes,
+            num_services=num_services,
+        )
+        # r_obs = transform_obs_readable(observation)
+
+        prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+        You will be given a dictionary containing information about nodes in a computer network as a dictionary.
+        You will be given all the information applicable to each node.
+
+        <|eot_id|><|start_header_id|>user<|end_header_id|>
         
-        {observation}
+        Based purely on the description you have been given, say if any node has been compromised. If you do not see any issues, return 'ok'.
+
+        Network:
         
-        Action:
-        """
+        {r_obs}
+        
+        Vulnerabilities:<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
 
         response = self.client.generate(
             prompt=prompt,
-            grammar=grammar,
             do_sample=False,
-            repetition_penalty=1.5,
-            max_new_tokens=128,
+            repetition_penalty=1.2,
+            max_new_tokens=256,
         )
-        try:
-            action = Action(**json.loads(response.generated_text))
-            return action.chosen_action
 
-        except Exception:
-            print(response.generated_text)
-            raise Exception
+        return response.generated_text
 
 
 class LLMAgent(AgentSessionABC):
@@ -113,14 +127,22 @@ class LLMAgent(AgentSessionABC):
 
         for _ in range(episodes):
             obs = self._env.reset()
+            done, steps, rew = False, 0, 0
+            while steps < time_steps and not done:
 
-            for _ in range(time_steps):
-                # action = self._agent.predict(obs, deterministic=self._training_config.deterministic, **kwargs)
-                new_obs, rewards, done, info = self._env.step(action=0)
+                action = self._agent.predict(
+                    obs,
+                    deterministic=self._training_config.deterministic,
+                    num_nodes=self._env.num_nodes,
+                    num_links=self._env.num_links,
+                    num_services=self._env.num_services,
+                )
 
-                msg = transform_obs_readable(obs=obs)
-                _LOGGER.info(msg=msg)
-                obs = new_obs
+                _LOGGER.info(action)
+
+                obs, rewards, done, info = self._env.step(action=0)
+                steps += 1
+                # rew += rewards
 
         self._env._write_av_reward_per_episode()  # noqa
         self._env.close()
