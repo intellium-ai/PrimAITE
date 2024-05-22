@@ -105,7 +105,7 @@ class HardCodedAgentSessionABC(AgentSessionABC):
         self._env.close()
 
     @classmethod
-    def load(cls, path: Union[str, Path] | None = None) -> None:
+    def load(cls, path: Optional[Union[str, Path]] = None) -> None:
         """Load an agent from file."""
         _LOGGER.warning("Deterministic agents cannot be loaded")
 
