@@ -6,13 +6,18 @@ import numpy as np
 from primaite.common.custom_typing import NodeUnion
 from primaite.common.enums import (
     HardwareState,
+    FileSystemState,
     LinkStatus,
     NodeHardwareAction,
     NodePOLType,
     NodeSoftwareAction,
     SoftwareState,
+    ServiceState,
     RulePermissionType,
 )
+from primaite import getLogger
+
+_LOGGER = getLogger(__name__)
 
 
 def transform_action_node_readable(action: List[int]) -> List[Union[int, str]]:
@@ -173,7 +178,7 @@ def is_valid_acl_action_extra(action: List[int], implicit_permission: RulePermis
     return True
 
 
-def transform_change_obs_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
+def transform_change_nodelink_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
     """Transform list of transactions to readable list of each observation property.
 
     example:
@@ -187,17 +192,34 @@ def transform_change_obs_readable(obs: np.ndarray) -> List[List[Union[str, int]]
     ids = [i for i in obs[:, 0]]
     operating_states = [HardwareState(i).name for i in obs[:, 1]]
     os_states = [SoftwareState(i).name for i in obs[:, 2]]
-    new_obs = [ids, operating_states, os_states]
+    fs_states = [FileSystemState(i).name for i in obs[:, 3]]
+    new_obs = [ids, operating_states, os_states, fs_states]
 
     for service in range(4, obs.shape[1]):
         # Links bit/s don't have a service state
-        service_states = [SoftwareState(i).name if i <= 4 else i for i in obs[:, service]]
+        service_states = [ServiceState(i).name if i <= 4 else i for i in obs[:, service]]
         new_obs.append(service_states)
 
     return new_obs
 
 
-def transform_obs_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
+def transform_change_nodestatus_readable(obs: np.ndarray, num_nodes: int) -> List[List[str]]:
+    nodes = np.array(np.split(obs, num_nodes))
+
+    ids = list(range(1, num_nodes + 1))
+    operating_states = [HardwareState(i).name for i in nodes[:, 0]]
+    os_states = [SoftwareState(i).name for i in nodes[:, 1]]
+    fs_states = [FileSystemState(i).name for i in nodes[:, 2]]
+
+    new_obs = [ids, operating_states, os_states, fs_states]
+
+    for col in range(3, nodes.shape[1]):
+        new_obs.append([ServiceState(i).name for i in nodes[:, col]])
+
+    return new_obs
+
+
+def transform_nodelink_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
     """Transform observation to readable format.
 
     example
@@ -208,12 +230,18 @@ def transform_obs_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
     :return: The same observation, but the encoded integer values are replaced with readable names.
     :rtype: List[List[Union[str, int]]]
     """
-    changed_obs = transform_change_obs_readable(obs)
+    changed_obs = transform_change_nodelink_readable(obs)
     new_obs = list(zip(*changed_obs))
     # Convert list of tuples to list of lists
     new_obs = [list(i) for i in new_obs]
 
     return new_obs
+
+
+def transform_nodestatus_readable(obs: np.ndarray, num_nodes: int) -> List[List[str]]:
+    changed_obs = transform_change_nodestatus_readable(obs=obs, num_nodes=num_nodes)
+    new_obs = list(zip(*changed_obs))
+    return [list(i) for i in new_obs]
 
 
 def convert_to_new_obs(obs: np.ndarray, num_nodes: int = 10) -> np.ndarray:
@@ -453,3 +481,8 @@ def get_new_action(old_action: np.ndarray, action_dict: Dict[int, List]) -> int:
     # Not all possible actions are included in dict, only valid action are
     # if action is not in the dict, its an invalid action so return 0
     return 0
+
+
+def split_obs_space(obs: np.ndarray, num_nodes: int, num_links: int, num_services: int):
+    nodelink_size = (num_nodes + num_links) * (num_services + 4)
+    return obs[:nodelink_size]

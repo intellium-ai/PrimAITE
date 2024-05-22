@@ -52,14 +52,16 @@ hard_coded_agent_view: BASIC
 # "NODE"
 # "ACL"
 # "ANY" node and acl actions
-action_type: NODE
+action_type: ANY
 
 # observation space
 observation_space:
   components:
-    #- name: NODE_LINK_TABLE
-    - name: NODE_STATUSES
+    - name: NODE_LINK_TABLE
+    # - name: NODE_STATUSES
     # - name: LINK_TRAFFIC_LEVELS
+    #   options:
+    #     combine_service_traffic : True
     # - name: ACCESS_CONTROL_LIST
 
 # Number of episodes for training to run per session
@@ -69,10 +71,10 @@ num_train_episodes: 500
 num_train_steps: 256
 
 # Number of episodes for evaluation to run per session
-num_eval_episodes: 4
+num_eval_episodes: 1
 
 # Number of time_steps for evaluation per episode
-num_eval_steps: 256
+num_eval_steps: 16
 
 # Sets how often the agent will save a checkpoint (every n time episodes).
 # Set to 0 if no checkpoints are required. Default is 10

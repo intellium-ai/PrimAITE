@@ -3,22 +3,15 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel
 from text_generation import Client
-from text_generation.types import Grammar, GrammarType
 
 from primaite import getLogger
 from primaite.agents.agent_abc import AgentSessionABC
 from primaite.common.enums import AgentFramework, AgentIdentifier
 from primaite.environment.primaite_env import Primaite
-from primaite.agents.utils import transform_obs_readable
-from primaite.agents.llm_utils import nodestatus_to_understandable, nodelink_to_understandable
+from primaite.agents.utils import transform_nodelink_readable, transform_nodestatus_readable, split_obs_space
 
 _LOGGER: Logger = getLogger(__name__)
-
-
-class Action(BaseModel):
-    chosen_action: int
 
 
 class LLM:
@@ -32,14 +25,11 @@ class LLM:
         num_nodes: int,
         num_links: int,
         num_services: int,
-    ) -> str:
+    ) -> int:
 
-        r_obs = nodestatus_to_understandable(
-            observation,
-            num_nodes=num_nodes,
-            num_services=num_services,
-        )
-        # r_obs = transform_obs_readable(observation)
+        # _LOGGER.info(f"\n{observation}")
+
+        _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
 
         prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
@@ -52,18 +42,18 @@ class LLM:
 
         Network:
         
-        {r_obs}
+        {observation}
         
         Vulnerabilities:<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
 
-        response = self.client.generate(
-            prompt=prompt,
-            do_sample=False,
-            repetition_penalty=1.2,
-            max_new_tokens=256,
-        )
+        # response = self.client.generate(
+        #     prompt=prompt,
+        #     do_sample=False,
+        #     repetition_penalty=1.2,
+        #     max_new_tokens=256,
+        # )
 
-        return response.generated_text
+        return 0
 
 
 class LLMAgent(AgentSessionABC):
@@ -117,13 +107,7 @@ class LLMAgent(AgentSessionABC):
         self._env.set_as_eval()
         self.is_eval = True
 
-        if self._training_config.deterministic:
-            deterministic_str = "deterministic"
-        else:
-            deterministic_str = "non-deterministic"
-        _LOGGER.info(
-            f"Beginning {deterministic_str} evaluation for " f"{episodes} episodes @ {time_steps} time steps..."
-        )
+        _LOGGER.info(f"Num services: {self._env.num_services}")
 
         for _ in range(episodes):
             obs = self._env.reset()
@@ -138,9 +122,7 @@ class LLMAgent(AgentSessionABC):
                     num_services=self._env.num_services,
                 )
 
-                _LOGGER.info(action)
-
-                obs, rewards, done, info = self._env.step(action=0)
+                obs, rewards, done, info = self._env.step(action=action)
                 steps += 1
                 # rew += rewards
 

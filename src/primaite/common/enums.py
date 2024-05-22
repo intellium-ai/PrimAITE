@@ -41,7 +41,22 @@ class HardwareState(Enum):
 
 
 class SoftwareState(Enum):
-    """Software or Service state enumeration."""
+    """Software state enumeration."""
+
+    NONE = 0
+    GOOD = 1
+    PATCHING = 2
+    COMPROMISED = 3
+    OVERWHELMED = 4
+
+
+class ServiceState(Enum):
+    """
+    Service state enumeration.
+
+    This has the same values as SoftwareState but I wanted
+    to separate them to make it more explicit
+    """
 
     NONE = 0
     GOOD = 1
@@ -160,6 +175,7 @@ class ObservationType(Enum):
 class FileSystemState(Enum):
     """File System State."""
 
+    NONE = 0
     GOOD = 1
     CORRUPT = 2
     DESTROYED = 3

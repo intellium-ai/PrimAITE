@@ -5,7 +5,7 @@ from primaite.agents.hardcoded_abc import HardCodedAgentSessionABC
 from primaite.agents.utils import (
     get_new_action,
     transform_action_node_enum,
-    transform_change_obs_readable,
+    transform_change_nodelink_readable,
     convert_to_old_obs,
 )
 from primaite import getLogger
@@ -26,7 +26,7 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
         :rtype: int
         """
         action_dict = self._env.action_dict
-        r_obs = transform_change_obs_readable(obs)
+        r_obs = transform_change_nodelink_readable(obs)
         _, o, os, *s = r_obs
 
         if len(r_obs) == 4:  # only 1 service
