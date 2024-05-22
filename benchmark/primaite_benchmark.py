@@ -414,7 +414,6 @@ def run():
     """Run the PrimAITE benchmark."""
     start_datetime = datetime.now()
     av_reward_per_episode_dicts = {}
-    print(_RESULTS_ROOT)
     for i in range(1, 11):
         print(f"Starting Benchmark Session: {i}")
         with _get_benchmark_primaite_session() as session:

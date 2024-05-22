@@ -178,8 +178,8 @@ def is_valid_acl_action_extra(action: List[int], implicit_permission: RulePermis
     return True
 
 
-def transform_change_nodelink_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
-    """Transform list of transactions to readable list of each observation property.
+def _transform_change_nodelink_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
+    """Transform nodelink table readable list of each observation property.
 
     example:
     np.array([[1,2,1,3],[2,1,1,1]]) -> [[1, 2], ['OFF', 'ON'], ['GOOD', 'GOOD'], ['COMPROMISED', 'GOOD']]
@@ -203,7 +203,17 @@ def transform_change_nodelink_readable(obs: np.ndarray) -> List[List[Union[str, 
     return new_obs
 
 
-def transform_change_nodestatus_readable(obs: np.ndarray, num_nodes: int) -> List[List[str]]:
+def _transform_change_nodestatus_readable(obs: np.ndarray, num_nodes: int) -> List[List[str]]:
+    """
+    Transform NodeStatus observation space into readable array.
+
+    Args:
+        obs (np.ndarray): Array of nodestatus observation space
+        num_nodes (int): Number of nodes in the array
+
+    Returns:
+        List[List[str]]: Readable version of observation space. See docs for details
+    """
     nodes = np.array(np.split(obs, num_nodes))
 
     ids = list(range(1, num_nodes + 1))
@@ -220,17 +230,17 @@ def transform_change_nodestatus_readable(obs: np.ndarray, num_nodes: int) -> Lis
 
 
 def transform_nodelink_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
-    """Transform observation to readable format.
-
-    example
-    np.array([[1,2,1,3],[2,1,1,1]]) -> [[1, 'OFF', 'GOOD', 'COMPROMISED'], [2, 'ON', 'GOOD', 'GOOD']]
-
-    :param obs: Raw observation from the environment.
-    :type obs: np.ndarray
-    :return: The same observation, but the encoded integer values are replaced with readable names.
-    :rtype: List[List[Union[str, int]]]
     """
-    changed_obs = transform_change_nodelink_readable(obs)
+    Reformat nodelink table to be transposed, i.e. List of nodes for each property, to list of properties for each node.
+
+    Args:
+        obs (np.ndarray): _description_
+        num_nodes (int): _description_
+
+    Returns:
+        List[List[str]]: _description_
+    """
+    changed_obs = _transform_change_nodelink_readable(obs)
     new_obs = list(zip(*changed_obs))
     # Convert list of tuples to list of lists
     new_obs = [list(i) for i in new_obs]
@@ -239,7 +249,17 @@ def transform_nodelink_readable(obs: np.ndarray) -> List[List[Union[str, int]]]:
 
 
 def transform_nodestatus_readable(obs: np.ndarray, num_nodes: int) -> List[List[str]]:
-    changed_obs = transform_change_nodestatus_readable(obs=obs, num_nodes=num_nodes)
+    """
+    Reformat nodestatus table to be transposed, i.e. List of nodes for each property, to list of properties for each node.
+
+    Args:
+        obs (np.ndarray): _description_
+        num_nodes (int): _description_
+
+    Returns:
+        List[List[str]]: _description_
+    """
+    changed_obs = _transform_change_nodestatus_readable(obs=obs, num_nodes=num_nodes)
     new_obs = list(zip(*changed_obs))
     return [list(i) for i in new_obs]
 
@@ -484,5 +504,18 @@ def get_new_action(old_action: np.ndarray, action_dict: Dict[int, List]) -> int:
 
 
 def split_obs_space(obs: np.ndarray, num_nodes: int, num_links: int, num_services: int):
+    """
+    WIP: When multiple observation spaces are specified in the config file, they are flattened into a 1D array.
+    This function should separate them out into their original obs spaces in the correct shape.
+
+    Args:
+        obs (np.ndarray): Observation array
+        num_nodes (int): Number of nodes in the network
+        num_links (int): Number of links in the network
+        num_services (int): Number of services in the network
+
+    Returns:
+        Tuple: Individual obs spaces
+    """
     nodelink_size = (num_nodes + num_links) * (num_services + 4)
     return obs[:nodelink_size]

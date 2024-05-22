@@ -62,6 +62,9 @@ class TrainingConfig:
     action_type: ActionType = ActionType.ANY
     "The ActionType to use"
 
+    llm_url: str | None = None
+    """URL for Llama 3"""
+
     num_train_episodes: int = 10
     "The number of episodes to train over during an training session"
 

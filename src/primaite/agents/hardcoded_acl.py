@@ -10,7 +10,7 @@ from primaite.agents.utils import (
     get_new_action,
     get_node_of_ip,
     transform_action_acl_enum,
-    transform_change_nodelink_readable,
+    _transform_change_nodelink_readable,
 )
 from primaite.common.custom_typing import NodeUnion
 from primaite.common.enums import HardCodedAgentView, RulePermissionType
@@ -312,7 +312,7 @@ class HardCodedACLAgent(HardCodedAgentSessionABC):
         :rtype: int
         """
         # obs = convert_to_old_obs(obs)
-        r_obs = transform_change_nodelink_readable(obs)
+        r_obs = _transform_change_nodelink_readable(obs)
         _, _, _, *s = r_obs
 
         if len(r_obs) == 4:  # only 1 service
@@ -470,7 +470,7 @@ class HardCodedACLAgent(HardCodedAgentSessionABC):
         :rtype: int
         """
         action_dict = self._env.action_dict
-        r_obs = transform_change_nodelink_readable(obs)
+        r_obs = _transform_change_nodelink_readable(obs)
         _, o, _, *s = r_obs
 
         if len(r_obs) == 4:  # only 1 service

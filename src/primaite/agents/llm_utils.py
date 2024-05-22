@@ -1,3 +1,6 @@
+### (Jack) ### This file was mostly for me to muck around with obs and action spaces.
+### Polished functions can be found in primaite/agents/utils.py
+
 import numpy as np
 from typing import List, Dict, Tuple, Any
 

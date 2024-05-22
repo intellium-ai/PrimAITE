@@ -136,7 +136,7 @@
   sourceNodeServiceState: NA
 - item_type: RED_IER
   id: '15'
-  start_step: 60
+  start_step: 0
   end_step: 100
   load: 1000000
   protocol: TCP

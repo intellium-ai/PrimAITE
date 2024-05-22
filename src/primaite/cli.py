@@ -164,8 +164,8 @@ def session(
 
     legacy_ldf: If the lay down config file is a legacy file from PrimAITE < 2.0.
     """
-    # from primaite.config.lay_down_config import dos_very_basic_config_path
-    # from primaite.config.training_config import main_training_config_path
+    from primaite.config.lay_down_config import dos_very_basic_config_path
+    from primaite.config.training_config import main_training_config_path
     from primaite.main import run
 
     if load is not None:
@@ -175,12 +175,10 @@ def session(
     else:
         # start a new session using tc and ldc
         if not tc:
-            # tc = str(main_training_config_path())
-            tc = "/home/jacks/PrimAITE/src/primaite/config/_package_data/training/training_config_main.yaml"
+            tc = main_training_config_path()
 
         if not ldc:
-            # ldc = str(dos_very_basic_config_path())
-            ldc = "/home/jacks/PrimAITE/src/primaite/config/_package_data/lay_down/lay_down_config_2_DDOS_basic.yaml"
+            ldc = dos_very_basic_config_path()
 
         run(
             training_config_path=tc,

@@ -8,7 +8,6 @@ import numpy as np
 
 from primaite import getLogger
 from primaite.agents.agent_abc import AgentSessionABC
-from primaite.agents.utils import transform_change_nodelink_readable
 from primaite.environment.primaite_env import Primaite
 
 _LOGGER = getLogger(__name__)
@@ -99,8 +98,6 @@ class HardCodedAgentSessionABC(AgentSessionABC):
                 if not done:
                     action = self._calculate_action(obs)
                     obs, reward, done, info = self._env.step(action)
-                    _LOGGER.info(transform_change_nodelink_readable(obs))
-                    _LOGGER.info("=" * 100)
 
                 # Introduce a delay between steps
                 time.sleep(self._training_config.time_delay / 1000)
