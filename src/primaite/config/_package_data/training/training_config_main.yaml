@@ -26,7 +26,6 @@ deep_learning_framework: TF2
 # "DUMMY" (primaite.agents.simple.DummyAgent)
 agent_identifier: LLM
 
-llm_url: http://192.168.0.8:58084
 # Sets whether Red Agent POL and IER is randomised.
 # Options are:
 # True

@@ -45,12 +45,12 @@ class LLM:
         
         Vulnerabilities:<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
 
-        response = self.client.generate(
-            prompt=prompt,
-            do_sample=False,
-            repetition_penalty=1.2,
-            max_new_tokens=256,
-        )
+        # response = self.client.generate(
+        #     prompt=prompt,
+        #     do_sample=False,
+        #     repetition_penalty=1.2,
+        #     max_new_tokens=256,
+        # )
 
         return 0
 
@@ -74,7 +74,7 @@ class LLMAgent(AgentSessionABC):
             session_path=self.session_path,
             timestamp_str=self.timestamp_str,
         )
-        self._agent = LLM(base_url=self._training_config.llm_url)
+        self._agent = LLM(base_url="http://192.168.0.8:58084")
 
     def _save_checkpoint(self) -> None:
         _LOGGER.warning("Deterministic agents cannot learn")
