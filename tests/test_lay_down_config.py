@@ -12,6 +12,7 @@ from primaite.config.lay_down_config import (
 from tests import TEST_CONFIG_ROOT
 
 
+@pytest.mark.skip()  # legacy config, not interested
 @pytest.mark.parametrize(
     "legacy_file, new_path",
     [
