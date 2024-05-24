@@ -41,7 +41,22 @@ class HardwareState(Enum):
 
 
 class SoftwareState(Enum):
-    """Software or Service state enumeration."""
+    """Software state enumeration."""
+
+    NONE = 0
+    GOOD = 1
+    PATCHING = 2
+    COMPROMISED = 3
+    OVERWHELMED = 4
+
+
+class ServiceState(Enum):
+    """
+    Service state enumeration.
+
+    This has the same values as SoftwareState but I wanted
+    to separate them to make it more explicit
+    """
 
     NONE = 0
     GOOD = 1
@@ -129,14 +144,15 @@ class AgentIdentifier(Enum):
     "The RandomAgent"
     DUMMY = 6
     "The DummyAgent"
+    LLM = 7
 
 
 class HardCodedAgentView(Enum):
     """The view the deterministic hard-coded agent has of the environment."""
 
-    BASIC = 1
+    BASIC = "BASIC"
     "The current observation space only"
-    FULL = 2
+    FULL = "FULL"
     "Full environment view with actions taken and reward feedback"
 
 
@@ -159,6 +175,7 @@ class ObservationType(Enum):
 class FileSystemState(Enum):
     """File System State."""
 
+    NONE = 0
     GOOD = 1
     CORRUPT = 2
     DESTROYED = 3

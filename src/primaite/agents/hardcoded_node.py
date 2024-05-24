@@ -2,7 +2,15 @@
 import numpy as np
 
 from primaite.agents.hardcoded_abc import HardCodedAgentSessionABC
-from primaite.agents.utils import get_new_action, transform_action_node_enum, transform_change_obs_readable
+from primaite.agents.utils import (
+    get_new_action,
+    transform_action_node_enum,
+    _transform_change_nodelink_readable,
+    convert_to_old_obs,
+)
+from primaite import getLogger
+
+_LOGGER = getLogger(__name__)
 
 
 class HardCodedNodeAgent(HardCodedAgentSessionABC):
@@ -18,7 +26,7 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
         :rtype: int
         """
         action_dict = self._env.action_dict
-        r_obs = transform_change_obs_readable(obs)
+        r_obs = _transform_change_nodelink_readable(obs)
         _, o, os, *s = r_obs
 
         if len(r_obs) == 4:  # only 1 service
@@ -40,7 +48,7 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
                     action_service_index,
                 ]
                 action = transform_action_node_enum(action)
-                action = get_new_action(action, action_dict)
+                action = get_new_action(np.array(action), action_dict)
                 # We can only perform 1 action on each step
                 return action
 
@@ -62,7 +70,7 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
                         action_service_index,
                     ]
                     action = transform_action_node_enum(action)
-                    action = get_new_action(action, action_dict)
+                    action = get_new_action(np.array(action), action_dict)
                     # We can only perform 1 action on each step
                     return action
 
@@ -85,7 +93,7 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
                         action_service_index,
                     ]
                     action = transform_action_node_enum(action)
-                    action = get_new_action(action, action_dict)
+                    action = get_new_action(np.array(action), action_dict)
                     # We can only perform 1 action on each step
                     return action
 
@@ -103,8 +111,8 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
                     action_service_index,
                 ]
                 # TODO: transform_action_node_enum takes only one argument, not sure why two are given here.
-                action = transform_action_node_enum(action, action_dict)
-                action = get_new_action(action, action_dict)
+                action = transform_action_node_enum(action)
+                action = get_new_action(np.array(action), action_dict)
                 # We can only perform 1 action on each step
                 return action
 
@@ -120,6 +128,6 @@ class HardCodedNodeAgent(HardCodedAgentSessionABC):
             action_service_index,
         ]
         action = transform_action_node_enum(action)
-        action = get_new_action(action, action_dict)
+        action = get_new_action(np.array(action), action_dict)
 
         return action

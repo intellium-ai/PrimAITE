@@ -1,3 +1,4 @@
+# © Crown-owned copyright 2023, Defence Science and Technology Laboratory UK
 # Training Config File
 
 # Sets which agent algorithm framework will be used.
@@ -5,7 +6,7 @@
 # "SB3" (Stable Baselines3)
 # "RLLIB" (Ray RLlib)
 # "CUSTOM" (Custom Agent)
-agent_framework: SB3
+agent_framework: CUSTOM
 
 # Sets which deep learning framework will be used (by RLlib ONLY).
 # Default is TF (Tensorflow).
@@ -23,19 +24,19 @@ deep_learning_framework: TF2
 # "DO_NOTHING" (The DoNothing agents coupled with an ACL or NODE action_type)
 # "RANDOM" (primaite.agents.simple.RandomAgent)
 # "DUMMY" (primaite.agents.simple.DummyAgent)
-agent_identifier: PPO
+agent_identifier: LLM
 
 # Sets whether Red Agent POL and IER is randomised.
 # Options are:
 # True
 # False
-random_red_agent: False
+random_red_agent: True
 
 # The (integer) seed to be used in random number generation
 # Default is None (null)
 seed: null
 
-# Set whether the agent evaluation will be deterministic instead of stochastic
+# Set whether the agent will be deterministic instead of stochastic
 # Options are:
 # True
 # False
@@ -45,24 +46,26 @@ deterministic: False
 # Options are:
 # "BASIC" (The current observation space only)
 # "FULL" (Full environment view with actions taken and reward feedback)
-hard_coded_agent_view: FULL
+hard_coded_agent_view: BASIC
 
 # Sets How the Action Space is defined:
 # "NODE"
 # "ACL"
 # "ANY" node and acl actions
 action_type: ANY
+
 # observation space
 observation_space:
-  flatten: true
   components:
     - name: NODE_LINK_TABLE
-    - name: NODE_STATUSES
-    - name: LINK_TRAFFIC_LEVELS
-    - name: ACCESS_CONTROL_LIST
+    # - name: NODE_STATUSES
+    # - name: LINK_TRAFFIC_LEVELS
+    #   options:
+    #     combine_service_traffic : True
+    # - name: ACCESS_CONTROL_LIST
 
 # Number of episodes for training to run per session
-num_train_episodes: 10
+num_train_episodes: 500
 
 # Number of time_steps for training per episode
 num_train_steps: 256
@@ -71,11 +74,11 @@ num_train_steps: 256
 num_eval_episodes: 1
 
 # Number of time_steps for evaluation per episode
-num_eval_steps: 256
+num_eval_steps: 16
 
 # Sets how often the agent will save a checkpoint (every n time episodes).
 # Set to 0 if no checkpoints are required. Default is 10
-checkpoint_every_n_episodes: 10
+checkpoint_every_n_episodes: 0
 
 # Time delay (milliseconds) between steps for CUSTOM agents.
 time_delay: 5
@@ -84,16 +87,11 @@ time_delay: 5
 # "TRAIN" (Trains an agent)
 # "EVAL" (Evaluates an agent)
 # "TRAIN_EVAL" (Trains then evaluates an agent)
-session_type: TRAIN_EVAL
+session_type: EVAL
 
 # Environment config values
 # The high value for the observation space
 observation_space_high_value: 1000000000
-
-# Implicit ACL firewall rule at end of ACL list to be the default action (ALLOW or DENY)
-implicit_acl_rule: DENY
-# Total number of ACL rules allowed in the environment
-max_number_acl_rules: 30
 
 # The Stable Baselines3 learn/eval output verbosity level:
 # Options are:
