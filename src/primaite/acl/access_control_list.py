@@ -104,6 +104,7 @@ class AccessControlList:
             _port: the port
             _position: position to insert ACL rule into ACL list (starting from index 1 and NOT 0)
         """
+        # raise Exception
         try:
             position_index = int(_position)
         except TypeError:

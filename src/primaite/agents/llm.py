@@ -1,17 +1,45 @@
+import json
+from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
+from pydantic import BaseModel
 from text_generation import Client
+from text_generation.types import Grammar, GrammarType
 
 from primaite import getLogger
 from primaite.agents.agent_abc import AgentSessionABC
+from primaite.agents.utils import split_obs_space, transform_nodelink_readable, transform_nodestatus_readable
 from primaite.common.enums import AgentFramework, AgentIdentifier
 from primaite.environment.primaite_env import Primaite
-from primaite.agents.utils import transform_nodelink_readable, transform_nodestatus_readable, split_obs_space
 
 _LOGGER: Logger = getLogger(__name__)
+
+
+def format_llama_prompt(system: str, messages: list[tuple[Literal["user", "assistant"], str]]) -> str:
+    prompt = "<|begin_of_text|>"
+
+    # system prompt
+    prompt += "<|start_header_id|>system<|end_header_id|>\n\n"
+    prompt += system
+    prompt += "<|eot_id|>"
+
+    # prev messages
+    for role, msg in messages:
+        prompt += f"<|start_header_id|>{role}<|end_header_id|>\n\n"
+        prompt += msg
+        prompt += "<|eot_id|>"
+
+    # prompt llm to answer
+    prompt += "<|start_header_id|>assistant<|end_header_id|>"
+
+    return prompt
+
+
+class Action(BaseModel):
+    node_id: int
 
 
 class LLM:
@@ -27,30 +55,28 @@ class LLM:
         num_services: int,
     ) -> int:
 
-        _LOGGER.info(f"\n{observation}")
-        _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
+        # _LOGGER.info(f"\n{observation}")
+        # _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
 
-        prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+        system_msg = "You are a defensive agent "
 
-        You will be given a dictionary containing information about nodes in a computer network as a dictionary.
-        You will be given all the information applicable to each node.
-
-        <|eot_id|><|start_header_id|>user<|end_header_id|>
-        
+        user_msg = f"""
         Based purely on the description you have been given, say if any node has been compromised. If you do not see any issues, return 'ok'.
 
         Network:
         
         {observation}
         
-        Vulnerabilities:<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
-
-        # response = self.client.generate(
-        #     prompt=prompt,
-        #     do_sample=False,
-        #     repetition_penalty=1.2,
-        #     max_new_tokens=256,
-        # )
+        Vulnerabilities:
+        """
+        prompt = format_llama_prompt(system_msg, [("user", user_msg)])
+        _LOGGER.info(f"{prompt}")
+        response = self.client.generate(
+            prompt=prompt, grammar=Grammar(type=GrammarType.Json, value=Action.model_json_schema())
+        )
+        generated_text = response.generated_text
+        action = Action(**json.loads(generated_text))
+        _LOGGER.info(f"\n{action}")
 
         return 0
 
