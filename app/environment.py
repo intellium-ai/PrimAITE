@@ -29,10 +29,14 @@ class EnvironmentState:
         if self.prev_env_state is None:
             return ""
         prev_nodes_table = self.prev_env_state.nodes_table
-        compare = prev_nodes_table.compare(self.nodes_table, result_names=("prev", "curr"))
+        compare = prev_nodes_table.compare(self.nodes_table, result_names=("prev", "curr"), align_axis=0)
         for col in compare:
+            state_name = col
+
+            prev_state = col
 
             print(col)
+
             print(compare[col])
         return str(compare)
 

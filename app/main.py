@@ -23,7 +23,7 @@ agent = session._agent_session
 env = agent._env
 
 if "env_history" not in state:
-    state.env_history = [EnvironmentState(env, "")]
+    state.env_history = [EnvironmentState(env)]
 
 
 input_col, curr_step_col, _ = st.columns([1, 2, 3])
