@@ -1,5 +1,7 @@
 # Displaying the environment state
 
+from dataclasses import dataclass
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -12,7 +14,53 @@ from primaite.nodes.active_node import ActiveNode
 from primaite.nodes.service_node import ServiceNode
 
 
-def display_acl(env: Primaite):
+@dataclass
+class EnvironmentState:
+    obs_diff: str
+    nodes_table: pd.DataFrame
+    traffic_table: pd.DataFrame
+    acl_table: pd.DataFrame
+    network: nx.Graph
+
+    def __init__(self, env: Primaite, obs_diff: str):
+        self.obs_diff = obs_diff
+        self.nodes_table = get_nodes_table(env)
+        self.traffic_table = get_traffic_table(env)
+        self.acl_table = get_acl_table(env)
+        self.network = env.network.copy()
+
+    def display_network(self):
+        # Make sure node locations in plot are constant
+        G = self.network
+        pos = nx.spring_layout(G, seed=100)
+        fig = plt.figure()
+        nx.draw_networkx(G, pos=pos, with_labels=False)
+
+        pos_higher = {}
+        y_off = 0.05  # offset on the y axis
+
+        for k, v in pos.items():
+            pos_higher[k] = (v[0], v[1] + y_off)
+
+        nx.draw_networkx_labels(G, pos=pos_higher, font_size=5)
+
+        edge_labels = {edge[0:2]: edge[2]["id"] for edge in G.edges(data=True)}
+
+        nx.draw_networkx_edge_labels(G, pos=pos, font_size=4, edge_labels=edge_labels)
+
+        st.pyplot(fig)
+
+    def display(self):
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.table(self.nodes_table)
+            st.table(self.traffic_table)
+        with col2:
+            self.display_network()
+            st.write(self.obs_diff)
+
+
+def get_acl_table(env: Primaite) -> pd.DataFrame:
     rules = env.acl.acl
 
     rules = [r for r in rules if r is not None]
@@ -27,26 +75,29 @@ def display_acl(env: Primaite):
 
     acl_table = pd.DataFrame(rules_dict, index=None)
 
-    st.table(acl_table)
+    return acl_table
 
 
-def display_traffic(env: Primaite):
+def get_traffic_table(env: Primaite) -> pd.DataFrame:
     links = list(env.links.values())
 
     indices = [int(link.id) for link in links]
 
     protocols = env.services_list
     traffic_dict = {
-        protocol + " Traffic": [link.get_current_protocol_load(protocol) for link in links] for protocol in protocols
+        protocol
+        + " Traffic": [f"{int(100 * link.get_current_protocol_load(protocol) / link.bandwidth)}%" for link in links]
+        for protocol in protocols
     }
-    link_dict = {"Name": list(env.links.keys()), "Bandwidth": [link.bandwidth for link in links]}
+    link_dict = {"Name": list(env.links.keys())}
 
     traffic_table = pd.DataFrame(link_dict | traffic_dict)
     traffic_table.index = indices  # type: ignore
-    st.table(traffic_table)
+
+    return traffic_table
 
 
-def display_nodes(env: Primaite):
+def get_nodes_table(env: Primaite) -> pd.DataFrame:
     nodes = list(env.nodes.values())
     nodes = [n for n in nodes if isinstance(n, ActiveNode)]
 
@@ -73,32 +124,4 @@ def display_nodes(env: Primaite):
     nodes_table.index += 1
     nodes_table.replace({"NONE": "-"}, inplace=True)
 
-    st.table(nodes_table)
-
-
-# def display_services(env: Primaite):
-
-
-def display_network(env: Primaite):
-
-    G = env.network.copy()
-
-    # Make sure node locations in plot are constant
-    pos = nx.spring_layout(G, seed=100)
-    fig = plt.figure()
-    nx.draw_networkx(G, pos=pos, with_labels=False)
-
-    pos_higher = {}
-    y_off = 0.05  # offset on the y axis
-
-    for k, v in pos.items():
-        pos_higher[k] = (v[0], v[1] + y_off)
-
-    nx.draw_networkx_labels(G, pos=pos_higher, font_size=5)
-
-    print(G.edges)
-    edge_labels = {}
-
-    nx.draw_networkx_edges(G, pos=pos)
-
-    st.pyplot(fig)
+    return nodes_table

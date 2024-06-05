@@ -5,10 +5,10 @@ import sys
 from pathlib import Path
 
 import streamlit as st
-from environment import display_acl, display_network, display_nodes, display_traffic
+from environment import EnvironmentState
 from streamlit import session_state as state
 
-from primaite.agents.utils import transform_nodestatus_readable
+from primaite.agents.utils import describe_obs_change
 from primaite.primaite_session import PrimaiteSession
 
 st.set_page_config(layout="wide")
@@ -19,49 +19,57 @@ lay_down_config_path = config_path / "lay_down" / "lay_down_config_5_data_manipu
 
 session = PrimaiteSession(training_config_path, lay_down_config_path)
 session.setup()
-
 agent = session._agent_session
-
 env = agent._env
-
 obs = env.reset()
-env.step(0)
 
-col_table, col_graph, _ = st.columns(3)
-with col_table:
-    display_nodes(env)
-    display_traffic(env)
-with col_graph:
-    display_network(env)
+if "env_history" not in state:
+    state.env_history = [EnvironmentState(env, "")]
 
 
-# num_steps = agent._training_config.num_eval_steps
-# col1, col2, _, _, _, _ = st.columns(6)
-# with col2:
-#     num_steps = int(st.number_input("Number of steps", value=1, min_value=0))
-# with col1:
-#     button = st.button("Start PrimAITE simulation")
+input_col, curr_step_col, _ = st.columns([1, 2, 3])
+with input_col:
+    num_steps = int(st.number_input("Number of steps", value=agent._training_config.num_eval_steps, min_value=0))
+    button = st.button("Start PrimAITE simulation")
 
-# if button:
-#     env.set_as_eval()
-#     canvas = st.empty()
+with curr_step_col:
+    if len(state.env_history) > 1:
+        st.slider("Current step", min_value=0, max_value=len(state.env_history) - 1, key="curr_step")
+    else:
+        state.curr_step = 0
 
-#     obs = env.reset()
-#     for step in range(1, num_steps + 1):
-#         canvas.empty()
+env_view = st.empty()
 
-#         # Run simulation
+with env_view.container():
+    state.env_history[0].display()
 
-#         obs, rewards, done, _ = env.step(0)
-#         print(obs)
 
-#         # Display updated environment
-#         with canvas.container():
-#             st.write(f"Step: {step}")
-#             col_table, col_graph, _ = st.columns(3)
-#             with col_table:
-#                 display_nodes(env)
-#             with col_graph:
-#                 display_network(env)
+# Run the simulation
+if button:
+    env.set_as_eval()
+    prev_obs = env.reset()
 
-#             display_traffic(env)
+    for step in range(1, num_steps + 1):
+        env_view.empty()
+
+        # Run simulation
+
+        obs, rewards, done, _ = env.step(0)
+        obs_diff = describe_obs_change(
+            prev_obs, obs, num_nodes=len(env.nodes), num_links=len(env.links), num_services=len(env.services_list)
+        )
+        env_state = EnvironmentState(env, obs_diff)
+        with env_view.container():
+            env_state.display()
+        state.env_history.append(env_state)
+        state.curr_step = len(state.env_history) - 1
+
+        prev_obs = obs
+
+        if done:
+            break
+    st.rerun()
+else:
+    env_view.empty()
+    with env_view.container():
+        state.env_history[state.curr_step].display()
