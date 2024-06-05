@@ -1,4 +1,5 @@
 # Displaying the environment state
+from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -14,20 +15,26 @@ from primaite.nodes.active_node import ActiveNode
 from primaite.nodes.service_node import ServiceNode
 
 
-@dataclass
 class EnvironmentState:
-    obs_diff: str
-    nodes_table: pd.DataFrame
-    traffic_table: pd.DataFrame
-    acl_table: pd.DataFrame
-    network: nx.Graph
 
-    def __init__(self, env: Primaite, obs_diff: str):
-        self.obs_diff = obs_diff
+    def __init__(self, env: Primaite, prev_env_state: EnvironmentState | None = None):
+        self.prev_env_state = prev_env_state
         self.nodes_table = get_nodes_table(env)
         self.traffic_table = get_traffic_table(env)
         self.acl_table = get_acl_table(env)
         self.network = env.network.copy()
+
+    @property
+    def obs_diff(self) -> str:
+        if self.prev_env_state is None:
+            return ""
+        prev_nodes_table = self.prev_env_state.nodes_table
+        compare = prev_nodes_table.compare(self.nodes_table, result_names=("prev", "curr"))
+        for col in compare:
+
+            print(col)
+            print(compare[col])
+        return str(compare)
 
     def display_network(self):
         # Make sure node locations in plot are constant
