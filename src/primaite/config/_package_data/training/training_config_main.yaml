@@ -52,7 +52,7 @@ hard_coded_agent_view: BASIC
 # "NODE"
 # "ACL"
 # "ANY" node and acl actions
-action_type: ANY
+action_type: NODE
 
 # observation space
 observation_space:

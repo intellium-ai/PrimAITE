@@ -3,19 +3,18 @@ from typing import Dict, List, Union
 
 import numpy as np
 
+from primaite import getLogger
 from primaite.common.custom_typing import NodeUnion
 from primaite.common.enums import (
-    HardwareState,
     FileSystemState,
+    HardwareState,
     LinkStatus,
     NodeHardwareAction,
     NodePOLType,
     NodeSoftwareAction,
-    SoftwareState,
-    ServiceState,
     RulePermissionType,
+    SoftwareState,
 )
-from primaite import getLogger
 
 _LOGGER = getLogger(__name__)
 
@@ -197,7 +196,7 @@ def _transform_change_nodelink_readable(obs: np.ndarray) -> List[List[Union[str,
 
     for service in range(4, obs.shape[1]):
         # Links bit/s don't have a service state
-        service_states = [ServiceState(i).name if i <= 4 else i for i in obs[:, service]]
+        service_states = [SoftwareState(i).name if i <= 4 else i for i in obs[:, service]]
         new_obs.append(service_states)
 
     return new_obs
@@ -224,7 +223,7 @@ def _transform_change_nodestatus_readable(obs: np.ndarray, num_nodes: int) -> Li
     new_obs = [ids, operating_states, os_states, fs_states]
 
     for col in range(3, nodes.shape[1]):
-        new_obs.append([ServiceState(i).name for i in nodes[:, col]])
+        new_obs.append([SoftwareState(i).name for i in nodes[:, col]])
 
     return new_obs
 

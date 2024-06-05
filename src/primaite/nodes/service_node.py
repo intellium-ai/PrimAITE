@@ -168,6 +168,8 @@ class ServiceNode(ActiveNode):
         service_value = self.services.get(service_key)
         if service_value:
             return service_value.software_state
+        else:
+            return SoftwareState.NONE
 
     def update_services_patching_status(self) -> None:
         """Updates the patching counter for any service that are patching."""

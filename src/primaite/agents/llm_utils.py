@@ -1,8 +1,9 @@
 ### (Jack) ### This file was mostly for me to muck around with obs and action spaces.
 ### Polished functions can be found in primaite/agents/utils.py
 
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
-from typing import List, Dict, Tuple, Any
 
 HARDWARE_STATE: Dict[int, str] = {0: "none", 1: "on", 2: "off", 3: "resetting", 4: "shutting down", 5: "booting"}
 SOFTWARE_STATE: Dict[int, str] = {0: "none", 1: "good", 2: "patching", 3: "compromised", 4: "overwhelmed"}

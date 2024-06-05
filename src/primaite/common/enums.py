@@ -50,21 +50,6 @@ class SoftwareState(Enum):
     OVERWHELMED = 4
 
 
-class ServiceState(Enum):
-    """
-    Service state enumeration.
-
-    This has the same values as SoftwareState but I wanted
-    to separate them to make it more explicit
-    """
-
-    NONE = 0
-    GOOD = 1
-    PATCHING = 2
-    COMPROMISED = 3
-    OVERWHELMED = 4
-
-
 class NodePOLType(Enum):
     """Node Pattern of Life type enumeration."""
 

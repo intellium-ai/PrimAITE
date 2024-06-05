@@ -25,10 +25,10 @@ from primaite.common.enums import (
     HardwareState,
     NodePOLInitiator,
     NodePOLType,
-    RulePermissionType,
     NodeType,
     ObservationType,
     Priority,
+    RulePermissionType,
     SessionType,
     SoftwareState,
 )
@@ -1030,13 +1030,12 @@ class Primaite(Env):
         Args:
             item: A config data item
         """
-        acl_rule_permission = item["permission"]
+        acl_rule_permission = RulePermissionType.ALLOW if item["permission"] == "ALLOW" else RulePermissionType.DENY
         acl_rule_source = item["source"]
         acl_rule_destination = item["destination"]
         acl_rule_protocol = item["protocol"]
         acl_rule_port = item["port"]
         acl_rule_position = item.get("position")
-
         self.acl.add_rule(
             acl_rule_permission,
             acl_rule_source,
