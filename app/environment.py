@@ -18,6 +18,7 @@ from primaite.nodes.service_node import ServiceNode
 class EnvironmentState:
 
     def __init__(self, env: Primaite, prev_env_state: EnvironmentState | None = None):
+        self.env = env
         self.prev_env_state = prev_env_state
         self.nodes_table = get_nodes_table(env)
         self.traffic_table = get_traffic_table(env)
@@ -25,20 +26,35 @@ class EnvironmentState:
         self.network = env.network.copy()
 
     @property
-    def obs_diff(self) -> str:
+    def obs_diff(self) -> list[str]:
         if self.prev_env_state is None:
-            return ""
+            return []
+
+        diff = []
+        # Nodes
         prev_nodes_table = self.prev_env_state.nodes_table
-        compare = prev_nodes_table.compare(self.nodes_table, result_names=("prev", "curr"), align_axis=0)
-        for col in compare:
-            state_name = col
+        compare_nodes = prev_nodes_table.compare(self.nodes_table, result_names=("prev", "curr"), align_axis=0)
+        for state_name in compare_nodes:
+            for id, s in compare_nodes[state_name].groupby(level=0):
+                node_name = self.nodes_table.at[id, "Name"]
+                prev_state = s.iloc[0]
+                curr_state = s.iloc[1]
+                node_change_str = f"Node :blue[{node_name}]'s :violet[{state_name}] changed from :red[{prev_state}] to :red[{curr_state}]."
+                diff.append(node_change_str)
 
-            prev_state = col
+        # Links
+        prev_traffic_table = self.prev_env_state.traffic_table
+        compare_traffic = prev_traffic_table.compare(self.traffic_table, result_names=("prev", "curr"), align_axis=0)
+        for service_name in compare_traffic:
+            for id, s in compare_traffic[service_name].groupby(level=0):
+                link_name = self.traffic_table.at[id, "Name"]
+                prev_traffic = s.iloc[0]
+                curr_traffic = s.iloc[1]
+                traffic_diff = int(curr_traffic - prev_traffic)
+                link_change_str = f":violet[{service_name}] in link :green[{link_name}] changed by :red[{traffic_diff}]"
+                diff.append(link_change_str)
 
-            print(col)
-
-            print(compare[col])
-        return str(compare)
+        return diff
 
     def display_network(self):
         # Make sure node locations in plot are constant
@@ -53,11 +69,11 @@ class EnvironmentState:
         for k, v in pos.items():
             pos_higher[k] = (v[0], v[1] + y_off)
 
-        nx.draw_networkx_labels(G, pos=pos_higher, font_size=5)
+        nx.draw_networkx_labels(G, pos=pos_higher, font_size=5, font_color="blue")
 
         edge_labels = {edge[0:2]: edge[2]["id"] for edge in G.edges(data=True)}
 
-        nx.draw_networkx_edge_labels(G, pos=pos, font_size=4, edge_labels=edge_labels)
+        nx.draw_networkx_edge_labels(G, pos=pos, font_size=4, edge_labels=edge_labels, font_color="green")
 
         st.pyplot(fig)
 
@@ -68,7 +84,8 @@ class EnvironmentState:
             st.table(self.traffic_table)
         with col2:
             self.display_network()
-            st.write(self.obs_diff)
+            for change in self.obs_diff:
+                st.markdown(change)
 
 
 def get_acl_table(env: Primaite) -> pd.DataFrame:
@@ -96,8 +113,7 @@ def get_traffic_table(env: Primaite) -> pd.DataFrame:
 
     protocols = env.services_list
     traffic_dict = {
-        protocol
-        + " Traffic": [f"{int(100 * link.get_current_protocol_load(protocol) / link.bandwidth)}%" for link in links]
+        protocol + " Traffic": [int(100 * link.get_current_protocol_load(protocol) / link.bandwidth) for link in links]
         for protocol in protocols
     }
     link_dict = {"Name": list(env.links.keys())}
@@ -124,7 +140,7 @@ def get_nodes_table(env: Primaite) -> pd.DataFrame:
     protocols = env.services_list
     services_dict = {
         protocol
-        + " State": [
+        + " Service State": [
             node.get_service_state(protocol).name if isinstance(node, ServiceNode) else SoftwareState.NONE.name
             for node in nodes
         ]

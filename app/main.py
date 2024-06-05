@@ -15,12 +15,13 @@ st.set_page_config(layout="wide")
 
 config_path = Path("../src/primaite/config/_package_data/")
 training_config_path = config_path / "training" / "training_config_main.yaml"
-lay_down_config_path = config_path / "lay_down" / "lay_down_config_5_data_manipulation.yaml"
+lay_down_config_path = config_path / "lay_down" / "lay_down_config_1_DDOS_basic.yaml"
 
 session = PrimaiteSession(training_config_path, lay_down_config_path)
 session.setup()
 agent = session._agent_session
 env = agent._env
+num_steps = agent._training_config.num_eval_steps
 
 if "env_history" not in state:
     state.env_history = [EnvironmentState(env)]
@@ -28,12 +29,11 @@ if "env_history" not in state:
 
 input_col, curr_step_col, _ = st.columns([1, 2, 3])
 with input_col:
-    num_steps = int(st.number_input("Number of steps", value=agent._training_config.num_eval_steps, min_value=0))
     button = st.button("Start PrimAITE simulation")
 
 with curr_step_col:
     if len(state.env_history) > 1:
-        st.slider("Current step", min_value=0, max_value=len(state.env_history) - 1, key="curr_step")
+        state.curr_step = st.slider("Current step", min_value=0, max_value=len(state.env_history) - 1)
     else:
         st.write("Initial environment")
         state.curr_step = 0
