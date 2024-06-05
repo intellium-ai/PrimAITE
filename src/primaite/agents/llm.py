@@ -56,7 +56,7 @@ class LLM:
     ) -> int:
 
         # _LOGGER.info(f"\n{observation}")
-        # _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
+        _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
 
         system_msg = "You are a defensive agent "
 
@@ -71,12 +71,12 @@ class LLM:
         """
         prompt = format_llama_prompt(system_msg, [("user", user_msg)])
         _LOGGER.info(f"{prompt}")
-        response = self.client.generate(
-            prompt=prompt, grammar=Grammar(type=GrammarType.Json, value=Action.model_json_schema())
-        )
-        generated_text = response.generated_text
-        action = Action(**json.loads(generated_text))
-        _LOGGER.info(f"\n{action}")
+        # response = self.client.generate(
+        #     prompt=prompt, grammar=Grammar(type=GrammarType.Json, value=Action.model_json_schema())
+        # )
+        # generated_text = response.generated_text
+        # action = Action(**json.loads(generated_text))
+        # _LOGGER.info(f"\n{action}")
 
         return 0
 

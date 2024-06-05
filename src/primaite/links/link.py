@@ -101,6 +101,12 @@ class Link(object):
             total_load += protocol.get_load()
         return total_load
 
+    def get_current_protocol_load(self, protocol_name: str) -> int:
+        protocol = next((protocol for protocol in self.protocol_list if protocol_name == protocol.get_name()), None)
+        if protocol is not None:
+            return protocol.get_load()
+        return 0
+
     def add_protocol_load(self, _protocol: str, _load: int) -> None:
         """
         Adds a loading to a protocol on this link.
