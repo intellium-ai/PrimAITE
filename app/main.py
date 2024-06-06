@@ -36,6 +36,7 @@ with curr_step_col:
         state.curr_step = st.slider("Current step", min_value=0, max_value=len(state.env_history) - 1)
     else:
         state.curr_step = 0
+        state.total_reward = 0
 
 env_view = st.empty()
 
@@ -46,6 +47,7 @@ if button:
     obs = env.reset()
     prev_env_state = EnvironmentState(env)
     state.env_history = [prev_env_state]
+    state.total_reward = 0
 
     for step in range(1, num_steps + 1):
         env_view.empty()
@@ -53,10 +55,11 @@ if button:
         # Run simulation
 
         obs, rewards, done, _ = env.step(0)
+        state.total_reward += rewards
 
         env_state = EnvironmentState(env, prev_env_state)
         with env_view.container():
-            st.write(f"Step {step}")
+            st.markdown(f"Step :orange[{step}]&emsp; Avg Reward: :orange[{round(state.total_reward / step, 5)}]")
             env_state.display()
         state.env_history.append(env_state)
 
@@ -70,4 +73,6 @@ else:
     with env_view.container():
         if len(state.env_history) == 1:
             st.write("Initial environment")
+        else:
+            st.write(f"Avg Reward for Episode: :orange[{round(state.total_reward / (len(state.env_history) - 1), 5)}]")
         state.env_history[state.curr_step].display()
