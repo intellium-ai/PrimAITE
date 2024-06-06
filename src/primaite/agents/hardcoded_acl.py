@@ -3,21 +3,21 @@ from typing import Dict, List, Union
 
 import numpy as np
 
+from primaite import getLogger
 from primaite.acl.access_control_list import AccessControlList
 from primaite.acl.acl_rule import ACLRule
 from primaite.agents.hardcoded_abc import HardCodedAgentSessionABC
 from primaite.agents.utils import (
+    _transform_change_nodelink_readable,
     get_new_action,
     get_node_of_ip,
     transform_action_acl_enum,
-    _transform_change_nodelink_readable,
 )
 from primaite.common.custom_typing import NodeUnion
 from primaite.common.enums import HardCodedAgentView, RulePermissionType
 from primaite.nodes.active_node import ActiveNode
 from primaite.nodes.service_node import ServiceNode
 from primaite.pol.ier import IER
-from primaite import getLogger
 
 _LOGGER = getLogger(__name__)
 

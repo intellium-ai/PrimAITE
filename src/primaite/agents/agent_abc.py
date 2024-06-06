@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from uuid import uuid4
 
+import numpy as np
+
 import primaite
 from primaite import getLogger, PRIMAITE_PATHS
 from primaite.config import lay_down_config, training_config
@@ -222,6 +224,10 @@ class AgentSessionABC(ABC):
 
     @abstractmethod
     def _save_checkpoint(self) -> None:
+        pass
+
+    @abstractmethod
+    def _calculate_action(self, obs: np.ndarray) -> int:
         pass
 
     @abstractmethod

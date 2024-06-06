@@ -165,6 +165,12 @@ class SB3Agent(AgentSessionABC):
 
         self._plot_av_reward_per_episode(learning_session=True)
 
+    def _calculate_action(self, obs: np.ndarray) -> int:
+        action, _states = self._agent.predict(obs, deterministic=self._training_config.deterministic)
+        if isinstance(action, np.ndarray):
+            action = int(np.int64(action))
+        return action
+
     def evaluate(
         self,
         **kwargs: Any,
@@ -189,9 +195,7 @@ class SB3Agent(AgentSessionABC):
             obs = self._env.reset()
 
             for step in range(time_steps):
-                action, _states = self._agent.predict(obs, deterministic=self._training_config.deterministic)
-                if isinstance(action, np.ndarray):
-                    action = np.int64(action)
+                action = self._calculate_action(obs)
                 obs, rewards, done, info = self._env.step(action)
         self._env._write_av_reward_per_episode()  # noqa
         self._env.close()

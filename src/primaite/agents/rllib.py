@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Union
 from uuid import uuid4
 
+from numpy import ndarray
 from ray.rllib.algorithms import Algorithm
 from ray.rllib.algorithms.a2c import A2CConfig
 from ray.rllib.algorithms.ppo import PPOConfig
@@ -208,6 +209,10 @@ class RLlibAgent(AgentSessionABC):
         self._can_evaluate = True
         self._agent.restore(str(self._unpack_saved_agent_into_eval()))
 
+    def _calculate_action(self, obs: ndarray) -> int:
+        action = self._agent.compute_single_action(observation=obs, explore=False)
+        return action  # type: ignore
+
     def evaluate(
         self,
         **kwargs,
@@ -238,7 +243,7 @@ class RLlibAgent(AgentSessionABC):
         for episode in range(episodes):
             obs = self._env.reset()
             for step in range(time_steps):
-                action = self._agent.compute_single_action(observation=obs, explore=False)
+                action = self._calculate_action(obs=obs)
 
                 obs, rewards, done, info = self._env.step(action)
 

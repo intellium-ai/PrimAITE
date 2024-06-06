@@ -108,6 +108,16 @@ class LLMAgent(AgentSessionABC):
     def learn(self):
         _LOGGER.warning("Deterministic agents cannot learn")
 
+    def _calculate_action(self, obs: np.ndarray):
+        action = self._agent.predict(
+            obs,
+            deterministic=self._training_config.deterministic,
+            num_nodes=self._env.num_nodes,
+            num_links=self._env.num_links,
+            num_services=self._env.num_services,
+        )
+        return action
+
     def evaluate(
         self,
         **kwargs: Any,
@@ -129,13 +139,7 @@ class LLMAgent(AgentSessionABC):
             done, steps, rew = False, 0, 0
             while steps < time_steps and not done:
 
-                action = self._agent.predict(
-                    obs,
-                    deterministic=self._training_config.deterministic,
-                    num_nodes=self._env.num_nodes,
-                    num_links=self._env.num_links,
-                    num_services=self._env.num_services,
-                )
+                action = self._calculate_action(obs)
 
                 obs, rewards, done, info = self._env.step(action=action)
                 steps += 1
