@@ -15,7 +15,7 @@ st.set_page_config(layout="wide")
 
 config_path = Path("../src/primaite/config/_package_data/")
 training_config_path = config_path / "training" / "training_config_main.yaml"
-lay_down_config_path = config_path / "lay_down" / "lay_down_config_1_DDOS_basic.yaml"
+lay_down_config_path = config_path / "lay_down" / "lay_down_config_5_data_manipulation.yaml"
 
 session = PrimaiteSession(training_config_path, lay_down_config_path)
 session.setup()
@@ -35,7 +35,6 @@ with curr_step_col:
     if len(state.env_history) > 1:
         state.curr_step = st.slider("Current step", min_value=0, max_value=len(state.env_history) - 1)
     else:
-        st.write("Initial environment")
         state.curr_step = 0
 
 env_view = st.empty()
@@ -57,6 +56,7 @@ if button:
 
         env_state = EnvironmentState(env, prev_env_state)
         with env_view.container():
+            st.write(f"Step {step}")
             env_state.display()
         state.env_history.append(env_state)
 
@@ -68,4 +68,6 @@ if button:
 else:
     env_view.empty()
     with env_view.container():
+        if len(state.env_history) == 1:
+            st.write("Initial environment")
         state.env_history[state.curr_step].display()

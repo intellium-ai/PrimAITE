@@ -1,6 +1,7 @@
 # Displaying the environment state
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
@@ -11,7 +12,9 @@ import streamlit as st
 
 from primaite.common.enums import FileSystemState, HardwareState, NodeType, RulePermissionType, SoftwareState
 from primaite.environment.primaite_env import Primaite
+from primaite.links.link import Link
 from primaite.nodes.active_node import ActiveNode
+from primaite.nodes.node import Node
 from primaite.nodes.service_node import ServiceNode
 
 
@@ -19,6 +22,8 @@ class EnvironmentState:
 
     def __init__(self, env: Primaite, prev_env_state: EnvironmentState | None = None):
         self.env = env
+        self.nodes = copy.deepcopy(env.nodes)
+        self.links = copy.deepcopy(env.links)
         self.prev_env_state = prev_env_state
         self.nodes_table = get_nodes_table(env)
         self.traffic_table = get_traffic_table(env)
@@ -61,7 +66,36 @@ class EnvironmentState:
         G = self.network
         pos = nx.spring_layout(G, seed=100)
         fig = plt.figure()
-        nx.draw_networkx(G, pos=pos, with_labels=False)
+
+        # Draw nodes
+        # Nodes which have at least one of the states not being NONE or ON/GOOD are marked as RED
+        node_color_map = []
+        for G_node in G:
+            node_id = G_node.node_id
+            node = self.nodes[node_id]
+            if _is_working(node):
+                node_color_map.append("tab:blue")
+            else:
+                node_color_map.append("tab:red")
+
+        # Draw edges
+        # The higher the traffic in an edge, the more red the link is
+        edge_color_map = []
+        for src, dest, data in G.edges(data=True):
+            link_id = data["id"]
+            link = self.links[link_id]
+            traffic_level = get_traffic_level(link)
+            edge_color_map.append(traffic_level)
+
+        nx.draw_networkx(
+            G,
+            pos=pos,
+            node_color=node_color_map,
+            with_labels=False,
+            edge_color=edge_color_map,
+            edge_cmap=plt.cm.hot,  # type: ignore
+            edge_vmax=1.6,
+        )
 
         pos_higher = {}
         y_off = 0.05  # offset on the y axis
@@ -152,3 +186,25 @@ def get_nodes_table(env: Primaite) -> pd.DataFrame:
     nodes_table.replace({"NONE": "-"}, inplace=True)
 
     return nodes_table
+
+
+def _is_working(node: Node) -> bool:
+    if node.hardware_state.value > 1:
+        return False
+    if isinstance(node, ActiveNode):
+        if node.software_state.value > 1:
+            return False
+        if node.file_system_state_observed.value > 1:
+            return False
+
+    if isinstance(node, ServiceNode):
+        for s in list(node.services.values()):
+            if s.software_state.value > 1:
+                return False
+
+    return True
+
+
+def get_traffic_level(link: Link) -> float:
+    """Get a trafic level for the link from 0 to 1"""
+    return link.get_current_load() / link.get_bandwidth()
