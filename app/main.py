@@ -53,11 +53,11 @@ if button:
         env_view.empty()
 
         # Run simulation
-
-        obs, rewards, done, _ = env.step(0)
+        action = agent._calculate_action(obs)
+        obs, rewards, done, _ = env.step(action)
         state.total_reward += rewards
 
-        env_state = EnvironmentState(env, prev_env_state)
+        env_state = EnvironmentState(env, prev_env_state, action)
         with env_view.container():
             st.markdown(f"Step :orange[{step}]&emsp; Avg Reward: :orange[{round(state.total_reward / step, 5)}]")
             env_state.display()

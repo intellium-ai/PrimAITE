@@ -20,7 +20,8 @@ from primaite.nodes.service_node import ServiceNode
 
 class EnvironmentState:
 
-    def __init__(self, env: Primaite, prev_env_state: EnvironmentState | None = None):
+    def __init__(self, env: Primaite, prev_env_state: EnvironmentState | None = None, action: int | None = None):
+        self.action = action
         self.env = env
         self.nodes = copy.deepcopy(env.nodes)
         self.links = copy.deepcopy(env.links)
@@ -118,6 +119,10 @@ class EnvironmentState:
             st.table(self.traffic_table)
         with col2:
             self.display_network()
+            if self.action is not None:
+                action_verbose = _verbose_node_action(self.action, self.env)
+                st.markdown(action_verbose)
+                st.divider()
             for change in self.obs_diff:
                 st.markdown(change)
 
@@ -208,3 +213,65 @@ def _is_working(node: Node) -> bool:
 def get_traffic_level(link: Link) -> float:
     """Get a trafic level for the link from 0 to 1"""
     return link.get_current_load() / link.get_bandwidth()
+
+
+def _verbose_node_action(action: int, env: Primaite) -> str:
+    readable_action = env.action_dict[action]
+    node_id = readable_action[0]
+    node_property = readable_action[1]
+    property_action = readable_action[2]
+    service_index = readable_action[3]
+
+    if node_id == 0:
+        return "No action"
+
+    node = env.nodes[str(node_id)]
+    node_name = node.name
+
+    # PROPERTY
+    match node_property:
+        case 1:
+            state = "Hardware State"
+            match property_action:
+                case 1:
+                    act = "TURN ON"
+                case 2:
+                    act = "TURN OFF"
+                case 3:
+                    act = "RESET"
+                case _:
+                    return "No action"
+        case 2:
+            state = "Software State"
+            match property_action:
+                case 1:
+                    act = "PATCH"
+                case _:
+                    return "No action"
+        case 4:
+            state = "File System State"
+            match property_action:
+                case 1:
+                    act = "SCAN"
+                case 2:
+                    act = "REPAIR"
+                case 3:
+                    act = "RESTORE"
+                case _:
+                    return "No action"
+        case 3:
+            # Service State
+            protocol = env.services_list[service_index]
+            state = protocol + " Service State"
+
+            match property_action:
+                case 1:
+                    act = "PATCH"
+                case _:
+                    return "No action"
+
+        case _:
+            # todo: validate action separately
+            return "No action"
+
+    return f"Action :red[{act}] was taken on node :blue[{node_name}]'s :violet[{state}]"
