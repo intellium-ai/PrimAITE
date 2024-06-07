@@ -111,7 +111,7 @@ class PrimaiteSession:
 
                 else:
                     # Invalid AgentIdentifier ActionType combo
-                    raise ValueError
+                    raise ValueError("Invalid AgentIdentifier ActionType combo")
 
             elif self._training_config.agent_identifier == AgentIdentifier.DO_NOTHING:
                 _LOGGER.debug(f"PrimaiteSession Setup: Agent Identifier =" f" {AgentIdentifier.DO_NOTHING}")
@@ -132,7 +132,7 @@ class PrimaiteSession:
 
                 else:
                     # Invalid AgentIdentifier ActionType combo
-                    raise ValueError
+                    raise ValueError("Invalid AgentIdentifier ActionType combo")
 
             elif self._training_config.agent_identifier == AgentIdentifier.RANDOM:
                 _LOGGER.debug(f"PrimaiteSession Setup: Agent Identifier =" f" {AgentIdentifier.RANDOM}")
@@ -147,7 +147,7 @@ class PrimaiteSession:
 
             else:
                 # Invalid AgentFramework AgentIdentifier combo
-                raise ValueError
+                raise ValueError("Invalid AgentIdentifier ActionType combo")
 
         elif self._training_config.agent_framework == AgentFramework.SB3:
             _LOGGER.debug(f"PrimaiteSession Setup: Agent Framework = {AgentFramework.SB3}")
@@ -167,7 +167,7 @@ class PrimaiteSession:
 
         else:
             # Invalid AgentFramework
-            raise ValueError
+            raise ValueError("Invalid AgentIdentifier")
 
         self.session_path: Path = self._agent_session.session_path
         self.timestamp_str: str = self._agent_session.timestamp_str

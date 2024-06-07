@@ -489,7 +489,7 @@
 - item_type: RED_IER
   id: '51'
   start_step: 1
-  end_step: 1000
+  end_step: 100
   load: 10000
   protocol: UDP
   port: '53'

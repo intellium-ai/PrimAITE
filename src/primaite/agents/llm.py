@@ -56,21 +56,21 @@ class LLM:
     ) -> int:
 
         # _LOGGER.info(f"\n{observation}")
-        _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
+        # _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
 
-        system_msg = "You are a defensive agent "
+        # system_msg = "You are a defensive agent "
 
-        user_msg = f"""
-        Based purely on the description you have been given, say if any node has been compromised. If you do not see any issues, return 'ok'.
+        # user_msg = f"""
+        # Based purely on the description you have been given, say if any node has been compromised. If you do not see any issues, return 'ok'.
 
-        Network:
-        
-        {observation}
-        
-        Vulnerabilities:
-        """
-        prompt = format_llama_prompt(system_msg, [("user", user_msg)])
-        _LOGGER.info(f"{prompt}")
+        # Network:
+
+        # {observation}
+
+        # Vulnerabilities:
+        # """
+        # prompt = format_llama_prompt(system_msg, [("user", user_msg)])
+        # _LOGGER.info(f"{prompt}")
         # response = self.client.generate(
         #     prompt=prompt, grammar=Grammar(type=GrammarType.Json, value=Action.model_json_schema())
         # )
