@@ -103,11 +103,11 @@ if state.agent is not None:
             env_view.empty()
 
             # Run simulation
-            action = agent._calculate_action(obs)
+            action, info = agent._calculate_action_info(obs)
             obs, rewards, done, _ = env.step(action)
             state.total_reward += rewards
 
-            env_state = EnvironmentState(env, prev_env_state, action)
+            env_state = EnvironmentState(env, prev_env_state, action, info)
             with env_view.container():
                 st.markdown(f"Step :orange[{step}]&emsp; Avg Reward: :orange[{round(state.total_reward / step, 5)}]")
                 display_env_state(env_state)

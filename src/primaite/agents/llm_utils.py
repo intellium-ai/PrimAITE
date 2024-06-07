@@ -21,13 +21,38 @@ TRAFFIC_LEVEL: Dict[int, str] = {
 }
 
 
-def obs_view_full(env_state: EnvironmentState) -> str:
-    obs_str = "Observation Space:\n"
-    nodes = env_state.nodes_table.to_json(orient="records")
-    obs_str += "Node Status:\n" + nodes
-    links = env_state.traffic_table.to_json(orient="records")
-    obs_str += "Traffic Status:\n" + links
+def network_connectivity_desc(env_state: EnvironmentState) -> str:
+    # List nodes
+    desc = "Network description:"
+    nodes = list(env_state.nodes.values())
+    nodes_df = pd.DataFrame({"Name": [n.name for n in nodes], "Type": [n.node_type.name for n in nodes]})
+    desc += "\nNodes:\n" + nodes_df.to_json(orient="records")
+    links = list(env_state.links.values())
+    links_df = pd.DataFrame(
+        {
+            "Name": list(env_state.links.keys()),
+            "Source Node": [l.source_node_name for l in links],
+            "Destination Node": [l.dest_node_name for l in links],
+        }
+    )
+    desc += "\nLinks:\n" + links_df.to_json(orient="records")
 
+    return desc
+
+
+def obs_view_full(env_state: EnvironmentState) -> str:
+    obs_str = "Observation Space:"
+    nodes = env_state.nodes_table.to_json(orient="records")
+    obs_str += "\n\nNode Status:\n" + nodes
+    links = env_state.traffic_table.to_json(orient="records")
+    obs_str += "\n\nTraffic Status:\n" + links
+
+    return obs_str
+
+
+def obs_diff(env_state: EnvironmentState) -> str:
+
+    obs_str = "Observed changes:\n" + "\n".join(env_state.obs_diff(colors=False))
     return obs_str
 
 

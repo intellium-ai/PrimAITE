@@ -29,8 +29,12 @@ def display_env_state(env_state: EnvironmentState):
             st.write("**:blue[Blue Agent:]**")
             action_verbose = _verbose_node_action(env_state.action, env_state.env)
             st.markdown(action_verbose)
+
+            if env_state.info is not None:
+                with st.expander("Info"):
+                    st.write(env_state.info)
             st.divider()
 
         st.write("**Observation Space Changes:**")
-        for change in env_state.obs_diff:
+        for change in env_state.obs_diff(colors=True):
             st.markdown(change)

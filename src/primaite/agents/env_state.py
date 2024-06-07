@@ -19,7 +19,14 @@ from primaite.nodes.service_node import ServiceNode
 
 class EnvironmentState:
 
-    def __init__(self, env: Primaite, prev_env_state: EnvironmentState | None = None, action: int | None = None):
+    def __init__(
+        self,
+        env: Primaite,
+        prev_env_state: EnvironmentState | None = None,
+        action: int | None = None,
+        info: str | None = None,
+    ):
+        self.info = info
         self.action = action
         self.env = env
         self.nodes = copy.deepcopy(env.nodes)
@@ -30,8 +37,7 @@ class EnvironmentState:
         self.acl_table = get_acl_table(env)
         self.network = env.network.copy()
 
-    @property
-    def obs_diff(self) -> list[str]:
+    def obs_diff(self, colors=True) -> list[str]:
         if self.prev_env_state is None:
             return []
 
@@ -44,7 +50,10 @@ class EnvironmentState:
                 node_name = self.nodes_table.at[id, "Name"]
                 prev_state = s.iloc[0]
                 curr_state = s.iloc[1]
-                node_change_str = f"Node :blue[{node_name}]'s :violet[{state_name}] changed from :red[{prev_state}] to :red[{curr_state}]."
+                if colors:
+                    node_change_str = f"Node :blue[{node_name}]'s :violet[{state_name}] changed from :red[{prev_state}] to :red[{curr_state}]."
+                else:
+                    node_change_str = f"Node {node_name}'s {state_name} changed from {prev_state} to {curr_state}."
                 diff.append(node_change_str)
 
         # Links
@@ -56,7 +65,12 @@ class EnvironmentState:
                 prev_traffic = s.iloc[0]
                 curr_traffic = s.iloc[1]
                 traffic_diff = int(curr_traffic - prev_traffic)
-                link_change_str = f":violet[{service_name}] in link :green[{link_name}] changed by :red[{traffic_diff}]"
+                if colors:
+                    link_change_str = (
+                        f":violet[{service_name}] in link :green[{link_name}] changed by :red[{traffic_diff}]."
+                    )
+                else:
+                    link_change_str = f"{service_name} in link {link_name} changed by {traffic_diff}."
                 diff.append(link_change_str)
 
         return diff
