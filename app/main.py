@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 import streamlit as st
-from environment import EnvironmentState
+from environment import display_env_state, EnvironmentState
 from streamlit import session_state as state
 
 from primaite.primaite_session import PrimaiteSession
@@ -77,7 +77,7 @@ if state.agent is not None:
     with curr_step_col:
         if len(state.env_history) > 1:
             state.curr_step = st.slider(
-                "Current step", value=state.curr_step, min_value=0, max_value=len(state.env_history) - 1
+                "Current step", value=len(state.env_history) - 1, min_value=0, max_value=len(state.env_history) - 1
             )
         else:
             state.curr_step = 0
@@ -110,7 +110,7 @@ if state.agent is not None:
             env_state = EnvironmentState(env, prev_env_state, action)
             with env_view.container():
                 st.markdown(f"Step :orange[{step}]&emsp; Avg Reward: :orange[{round(state.total_reward / step, 5)}]")
-                env_state.display()
+                display_env_state(env_state)
             state.env_history.append(env_state)
 
             prev_env_state = env_state
@@ -118,9 +118,8 @@ if state.agent is not None:
             if done:
                 break
         state.simulation_done = True
-        state.curr_step = len(state.env_history) - 1
         st.rerun()
     else:
         env_view.empty()
         with env_view.container():
-            state.env_history[state.curr_step].display()
+            display_env_state(state.env_history[state.curr_step])

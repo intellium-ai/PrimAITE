@@ -4,6 +4,9 @@
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
+import pandas as pd
+
+from primaite.agents.env_state import EnvironmentState
 
 HARDWARE_STATE: Dict[int, str] = {0: "none", 1: "on", 2: "off", 3: "resetting", 4: "shutting down", 5: "booting"}
 SOFTWARE_STATE: Dict[int, str] = {0: "none", 1: "good", 2: "patching", 3: "compromised", 4: "overwhelmed"}
@@ -16,6 +19,16 @@ TRAFFIC_LEVEL: Dict[int, str] = {
     3: "high traffic",
     4: "overwhelmed",
 }
+
+
+def obs_view_full(env_state: EnvironmentState) -> str:
+    obs_str = "Observation Space:\n"
+    nodes = env_state.nodes_table.to_json(orient="records")
+    obs_str += "Node Status:\n" + nodes
+    links = env_state.traffic_table.to_json(orient="records")
+    obs_str += "Traffic Status:\n" + links
+
+    return obs_str
 
 
 def init_labels(num_services) -> List[str]:

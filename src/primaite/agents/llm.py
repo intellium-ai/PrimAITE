@@ -11,7 +11,8 @@ from text_generation.types import Grammar, GrammarType
 
 from primaite import getLogger
 from primaite.agents.agent_abc import AgentSessionABC
-from primaite.agents.utils import split_obs_space, transform_nodelink_readable, transform_nodestatus_readable
+from primaite.agents.env_state import EnvironmentState
+from primaite.agents.llm_utils import obs_view_full
 from primaite.common.enums import AgentFramework, AgentIdentifier
 from primaite.environment.primaite_env import Primaite
 
@@ -46,17 +47,7 @@ class LLM:
     def __init__(self, base_url: str, timeout: int = 60) -> None:
         self.client = Client(base_url=base_url, timeout=timeout)
 
-    def predict(
-        self,
-        observation: np.ndarray,
-        deterministic: bool,
-        num_nodes: int,
-        num_links: int,
-        num_services: int,
-    ) -> int:
-
-        # _LOGGER.info(f"\n{observation}")
-        _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
+    def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]) -> int:
 
         system_msg = "You are a defensive agent "
 
@@ -65,7 +56,7 @@ class LLM:
 
         Network:
         
-        {observation}
+        {obs_view_full(env_state)}
         
         Vulnerabilities:
         """
@@ -102,6 +93,9 @@ class LLMAgent(AgentSessionABC):
         )
         self._agent = LLM(base_url="http://192.168.0.8:58084")
 
+        # Keep track of env history
+        self.env_history = [EnvironmentState(self._env)]
+
     def _save_checkpoint(self) -> None:
         _LOGGER.warning("Deterministic agents cannot learn")
 
@@ -109,13 +103,13 @@ class LLMAgent(AgentSessionABC):
         _LOGGER.warning("Deterministic agents cannot learn")
 
     def _calculate_action(self, obs: np.ndarray):
-        action = self._agent.predict(
-            obs,
-            deterministic=self._training_config.deterministic,
-            num_nodes=self._env.num_nodes,
-            num_links=self._env.num_links,
-            num_services=self._env.num_services,
-        )
+        prev_env_state = self.env_history[-1]
+        env_state = EnvironmentState(self._env, prev_env_state=prev_env_state)
+
+        action = self._agent.predict(env_state, self.env_history)
+        env_state.action = action
+        self.env_history.append(env_state)
+
         return action
 
     def evaluate(
