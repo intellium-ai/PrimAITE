@@ -104,25 +104,32 @@ class EnvironmentState:
         for k, v in pos.items():
             pos_higher[k] = (v[0], v[1] + y_off)
 
-        nx.draw_networkx_labels(G, pos=pos_higher, font_size=5, font_color="blue")
+        nx.draw_networkx_labels(G, pos=pos_higher, font_size=5, font_color="black")
 
         edge_labels = {edge[0:2]: edge[2]["id"] for edge in G.edges(data=True)}
 
-        nx.draw_networkx_edge_labels(G, pos=pos, font_size=4, edge_labels=edge_labels, font_color="green")
+        nx.draw_networkx_edge_labels(G, pos=pos, font_size=4, edge_labels=edge_labels, font_color="black")
 
         st.pyplot(fig)
 
     def display(self):
-        col1, col2 = st.columns([1, 1])
-        with col1:
+        col_agent, col_env = st.columns([3, 5], gap="medium")
+        with col_env:
+            st.write("**Environment view:**")
             st.table(self.nodes_table)
-            st.table(self.traffic_table)
-        with col2:
-            self.display_network()
+            col_net, col_links = st.columns([3, 2])
+            with col_links:
+                st.table(self.traffic_table)
+            with col_net:
+                self.display_network()
+        with col_agent:
             if self.action is not None:
+                st.write("**:blue[Blue Agent:]**")
                 action_verbose = _verbose_node_action(self.action, self.env)
                 st.markdown(action_verbose)
                 st.divider()
+
+            st.write("**Observation Space Changes:**")
             for change in self.obs_diff:
                 st.markdown(change)
 
