@@ -100,7 +100,7 @@ class SB3Agent(AgentSessionABC):
             self._agent = self._agent_class(
                 PPOMlp,
                 self._env,
-                learning_rate=0.01,
+                learning_rate=0.001,
                 verbose=self.sb3_output_verbose_level,
                 n_steps=self._training_config.num_train_steps,
                 tensorboard_log=str(self._tensorboard_log_path),
@@ -197,6 +197,7 @@ class SB3Agent(AgentSessionABC):
                 action, _states = self._agent.predict(obs, deterministic=self._training_config.deterministic)
                 if isinstance(action, np.ndarray):
                     action = np.int64(action)
+                    _LOGGER.info(action)
                 obs, rewards, done, info = self._env.step(int(action))
         self._env._write_av_reward_per_episode()  # noqa
         self._env.close()

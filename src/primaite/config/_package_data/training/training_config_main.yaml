@@ -6,7 +6,7 @@
 # "SB3" (Stable Baselines3)
 # "RLLIB" (Ray RLlib)
 # "CUSTOM" (Custom Agent)
-agent_framework: SB3
+agent_framework: CUSTOM
 
 # Sets which deep learning framework will be used (by RLlib ONLY).
 # Default is TF (Tensorflow).
@@ -24,7 +24,7 @@ deep_learning_framework: TF2
 # "DO_NOTHING" (The DoNothing agents coupled with an ACL or NODE action_type)
 # "RANDOM" (primaite.agents.simple.RandomAgent)
 # "DUMMY" (primaite.agents.simple.DummyAgent)
-agent_identifier: A2C
+agent_identifier: LLM
 
 # Sets whether Red Agent POL and IER is randomised.
 # Options are:
@@ -65,7 +65,7 @@ observation_space:
     # - name: ACCESS_CONTROL_LIST
 
 # Number of episodes for training to run per session
-num_train_episodes: 128
+num_train_episodes: 1024
 
 # Number of time_steps for training per episode
 num_train_steps: 128
@@ -87,7 +87,7 @@ time_delay: 5
 # "TRAIN" (Trains an agent)
 # "EVAL" (Evaluates an agent)
 # "TRAIN_EVAL" (Trains then evaluates an agent)
-session_type: TRAIN_EVAL
+session_type: EVAL
 
 # Environment config values
 # The high value for the observation space

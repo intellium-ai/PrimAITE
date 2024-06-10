@@ -1,11 +1,11 @@
 - item_type: PORTS
   ports_list:
-  - port: '66'
-  - port: '14'
+  - port: '47'
+  - port: '49'
 - item_type: SERVICES
   service_list:
   - name: TCP
-  - name: TCP
+  - name: UDP
 - file_system_state: GOOD
   hardware_state: 'ON'
   ip_address: 192.168.0.1
@@ -15,6 +15,10 @@
   node_id: 1
   node_type: SWITCH
   priority: P1
+  services:
+  - name: TCP
+    port: 99
+    state: GOOD
   software_state: GOOD
 - file_system_state: GOOD
   hardware_state: 'ON'
@@ -25,6 +29,10 @@
   node_id: 2
   node_type: SWITCH
   priority: P1
+  services:
+  - name: TCP
+    port: 99
+    state: GOOD
   software_state: GOOD
 - file_system_state: GOOD
   hardware_state: 'ON'
@@ -35,4 +43,44 @@
   node_id: 3
   node_type: SWITCH
   priority: P1
+  services:
+  - name: TCP
+    port: 99
+    state: GOOD
   software_state: GOOD
+- bandwidth: 100000000
+  destination: '2'
+  id: '1'
+  item_type: LINK
+  name: link1
+  source: '1'
+- bandwidth: 100000000
+  destination: '2'
+  id: '2'
+  item_type: LINK
+  name: link2
+  source: '1'
+- bandwidth: 100000000
+  destination: '2'
+  id: '3'
+  item_type: LINK
+  name: link3
+  source: '1'
+- bandwidth: 100000000
+  destination: '2'
+  id: '4'
+  item_type: LINK
+  name: link4
+  source: '1'
+- bandwidth: 100000000
+  destination: '2'
+  id: '5'
+  item_type: LINK
+  name: link5
+  source: '1'
+- bandwidth: 100000000
+  destination: '2'
+  id: '6'
+  item_type: LINK
+  name: link6
+  source: '1'
