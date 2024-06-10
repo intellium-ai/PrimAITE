@@ -1,11 +1,11 @@
 - item_type: PORTS
   ports_list:
-  - port: '80'
-  - port: '99'
+  - port: '66'
+  - port: '14'
 - item_type: SERVICES
   service_list:
   - name: TCP
-  - name: UDP
+  - name: TCP
 - file_system_state: GOOD
   hardware_state: 'ON'
   ip_address: 192.168.0.1

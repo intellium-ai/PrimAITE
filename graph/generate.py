@@ -2,6 +2,7 @@ import yaml
 from typing import List, Final
 from dataclasses import dataclass
 import itertools
+import random
 from enum import Enum
 from primaite.common.enums import HardwareState, FileSystemState, SoftwareState
 
@@ -43,9 +44,19 @@ def generate_ports(ports: List[int]):
     return {"item_type": "PORTS", "ports_list": port_config}
 
 
+def generate_random_ports(num_ports: int, low=1, high=99):
+    ports = [random.randint(low, high) for _ in range(num_ports)]
+    return generate_ports(ports=ports)
+
+
 def generate_services(services: List[Service]):
     service_config = [{"name": service.value} for service in services]
     return {"item_type": "SERVICES", "service_list": service_config}
+
+
+def generate_random_services(num_services: int):
+    services = [random.choice(list(Service)) for _ in range(num_services)]
+    return generate_services(services=services)
 
 
 def generate_nodes(num_nodes: int):
@@ -72,13 +83,9 @@ def generate_random_nodes(num_nodes: int) -> List[Node]:
 
 
 def main():
-    PORTS = [80, 99]
-    SERVICES = [Service.TCP, Service.UDP]
-
     config = []
-
-    config.append(generate_ports(PORTS))
-    config.append(generate_services(SERVICES))
+    config.append(generate_random_ports(2))
+    config.append(generate_random_services(2))
     config.extend(generate_nodes(3))
 
     with open("test.yaml", "w+") as f:
