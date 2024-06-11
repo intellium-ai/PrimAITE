@@ -1,9 +1,15 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Final, List
+from typing import Any, Dict, Final, List
 
-from primaite.common.enums import FileSystemState, HardwareState, SoftwareState
+from primaite.common.enums import (
+    FileSystemState,
+    HardwareState,
+    NodeType,
+    Priority,
+    SoftwareState,
+)
 
 
 class Service(Enum):
@@ -15,7 +21,7 @@ class Service(Enum):
 class Serializable(ABC):
 
     @abstractmethod
-    def dict(self): ...
+    def dict(self) -> Dict[str, Any]: ...
 
 
 @dataclass
@@ -58,9 +64,8 @@ class Node(Serializable):
         self,
         node_id: int,
         name: str,
-        node_class: str,
-        node_type: str,
-        priority: str,
+        node_type: NodeType,
+        priority: Priority,
         hardware_state: HardwareState,
         ip_address: str,
         software_state: SoftwareState,
@@ -68,11 +73,11 @@ class Node(Serializable):
         services: List[NodeService],
     ) -> None:
         self.item_type: Final[str] = "NODE"
-        self.node_id = node_id
+        self.node_id = str(node_id)
         self.name = name
-        self.node_class = node_class
-        self.priority = priority
-        self.node_type = node_type
+        self.node_class: Final[str] = "ACTIVE"
+        self.priority = priority.name
+        self.node_type = node_type.name
         self.hardware_state = hardware_state.name
         self.ip_address = ip_address
         self.software_state = software_state.name
