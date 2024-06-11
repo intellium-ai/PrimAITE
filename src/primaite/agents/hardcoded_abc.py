@@ -71,10 +71,6 @@ class HardCodedAgentSessionABC(AgentSessionABC):
         """
         _LOGGER.warning("Deterministic agents cannot learn")
 
-    @abstractmethod
-    def _calculate_action(self, obs: np.ndarray) -> int:
-        pass
-
     def evaluate(
         self,
         **kwargs: Any,

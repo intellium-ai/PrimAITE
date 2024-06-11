@@ -9,6 +9,7 @@ from primaite.common.enums import (
     FileSystemState,
     HardwareState,
     LinkStatus,
+    NodeFileSystemAction,
     NodeHardwareAction,
     NodePOLType,
     NodeSoftwareAction,
@@ -37,6 +38,8 @@ def transform_action_node_readable(action: List[int]) -> List[Union[int, str]]:
         property_action = NodeHardwareAction(action[2]).name
     elif (action_node_property == "OS" or action_node_property == "SERVICE") and action[2] <= 1:
         property_action = NodeSoftwareAction(action[2]).name
+    elif action_node_property == "FILE":
+        property_action = NodeFileSystemAction(action[2]).name
     else:
         property_action = "NONE"
 
@@ -99,12 +102,12 @@ def is_valid_node_action(action: List[int]) -> bool:
         return False
     if node_action == "NONE":
         return False
-    if node_property == "OPERATING" and node_action == "PATCHING":
+    if node_property == "OPERATING" and node_action == "PATCH":
         # Operating State cannot PATCH
         return False
     if node_property != "OPERATING" and node_action not in [
         "NONE",
-        "PATCHING",
+        "PATCH",
     ]:
         # Software States can only do Nothing or Patch
         return False
