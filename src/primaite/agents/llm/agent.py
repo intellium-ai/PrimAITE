@@ -10,10 +10,12 @@ from text_generation import Client
 from text_generation.types import Grammar, GrammarType
 
 from primaite import getLogger
+from primaite.action import NodeAction
 from primaite.agents.agent_abc import AgentSessionABC
-from primaite.agents.env_state import _verbose_node_action, EnvironmentState
-from primaite.agents.llm_utils import network_connectivity_desc, obs_diff, obs_view_full
+from primaite.agents.llm.action import AgentNodeAction, get_action_space_description
+from primaite.agents.llm.utils import network_connectivity_desc, obs_diff, obs_view_full
 from primaite.common.enums import AgentFramework, AgentIdentifier
+from primaite.environment.env_state import EnvironmentState
 from primaite.environment.primaite_env import Primaite
 
 _LOGGER: Logger = getLogger(__name__)
@@ -39,17 +41,17 @@ def format_llama_prompt(system: str, messages: list[tuple[Literal["user", "assis
     return prompt
 
 
-class Action(BaseModel):
-    node_id: int
-
-
 class LLM:
     def __init__(self, base_url: str, timeout: int = 60) -> None:
         self.client = Client(base_url=base_url, timeout=timeout)
 
     def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]):
         # Task explanation
-        system_msg = "You are a cyber-defensive agent. Your mission is to protect a network against red agent attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols."
+        system_msg = "You are a cyber-defensive agent. Your mission is to protect a network against red agent attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols. The current link traffic is displayed as a percentage of its total bandwidth, for each possible protocol. The red agent is trying to compromise the network, by either directly incapacitating the nodes HARDWARE, SOFTWARE or FILE_SYSTEM states, or indirectly overwhelming the nodes through denial-of-service type attacks. \n"
+        env = env_state.env
+        # Action space description
+        action_space_desc = get_action_space_description(env_state.env)
+        system_msg += action_space_desc
 
         # Initial environment
         initial_state = env_history[0]
@@ -60,26 +62,46 @@ class LLM:
         # History of actions
         hist = "This is the history of observed changes and defensive actions you have taken, at each step.\n"
         for i, state in enumerate(env_history[1:]):
-            hist += f"\nStep {i}:"
-            if obs_diff != "":
-                hist += f"\n{obs_diff(state)}"
-            if state.action is not None:
-                hist += f"\n{_verbose_node_action(state.action, state.env)}"
+            observed_changes = obs_diff(state)
+            action_id = state.action_id
+
+            if observed_changes != "" and action_id:
+                hist += f"\nStep {i}:"
+
+                if observed_changes != "":
+                    hist += f"\nChanges:\n{observed_changes}"
+                if action_id is not None:
+                    action = NodeAction.from_id(env=env, action_id=action_id)
+                    action_verbose = action.verbose(colored=False)
+                    hist += f"\nAction:\n{action_verbose}\n"
+
         messages += [("user", hist), ("assistant", "Acknowledged.")]
 
-        # Current observation
-        response = f"Now, the current observation space is {obs_view_full(env_state)} and the changes that have occured are: {obs_diff(env_state)}. Please take a suitable action. Action: "
-        messages.append(("user", response))
+        # Current observation and action prompt
+        curr_obs = f"Now, the current observation space is {obs_view_full(env_state)} and the changes that have occured since last observation are: {obs_diff(env_state)}"
+        _LOGGER.info("\n\n")
+        _LOGGER.info(f"Observed changes: {obs_diff(env_state)}\n")
+
+        action_prompt = "Please take a suitable action. Action: "
+        messages.append(("user", curr_obs + action_prompt))
 
         prompt = format_llama_prompt(system_msg, messages)
-        # response = self.client.generate(
-        #     prompt=prompt, grammar=Grammar(type=GrammarType.Json, value=Action.model_json_schema())
-        # )
-        # generated_text = response.generated_text
-        # action = Action(**json.loads(generated_text))
-        # _LOGGER.info(f"\n{action}")
+        response = self.client.generate(
+            prompt=prompt,
+            grammar=Grammar(type=GrammarType.Json, value=AgentNodeAction.model_json_schema()),
+            max_new_tokens=300,
+        )
+        generated_text = response.generated_text
+        try:
+            agent_action = AgentNodeAction(**json.loads(generated_text))
+        except BaseException:
+            _LOGGER.exception(f"LLM generated invalid json: {generated_text}")
+        _LOGGER.info(f"Action: \n{agent_action}")
 
-        return 0, prompt
+        action = agent_action.to_node_action(env=env)
+        action_id = action.action_id
+
+        return action_id, prompt
 
 
 class LLMAgent(AgentSessionABC):
@@ -122,7 +144,7 @@ class LLMAgent(AgentSessionABC):
         env_state = EnvironmentState(self._env, prev_env_state=prev_env_state)
 
         action, info = self._agent.predict(env_state, self.env_history)
-        env_state.action = action
+        env_state.action_id = action
         self.env_history.append(env_state)
 
         return action, info

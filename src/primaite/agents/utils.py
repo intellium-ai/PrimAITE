@@ -99,12 +99,12 @@ def is_valid_node_action(action: List[int]) -> bool:
         return False
     if node_action == "NONE":
         return False
-    if node_property == "OPERATING" and node_action == "PATCHING":
+    if node_property == "OPERATING" and node_action == "PATCH":
         # Operating State cannot PATCH
         return False
     if node_property != "OPERATING" and node_action not in [
         "NONE",
-        "PATCHING",
+        "PATCH",
     ]:
         # Software States can only do Nothing or Patch
         return False

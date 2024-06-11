@@ -23,11 +23,11 @@ class EnvironmentState:
         self,
         env: Primaite,
         prev_env_state: EnvironmentState | None = None,
-        action: int | None = None,
+        action_id: int | None = None,
         info: str | None = None,
     ):
         self.info = info
-        self.action = action
+        self.action_id = action_id
         self.env = env
         self.nodes = copy.deepcopy(env.nodes)
         self.links = copy.deepcopy(env.links)
@@ -98,7 +98,7 @@ class EnvironmentState:
         for src, dest, data in G.edges(data=True):
             link_id = data["id"]
             link = self.links[link_id]
-            traffic_level = get_traffic_level(link)
+            traffic_level = link.get_traffic_level()
             edge_color_map.append(traffic_level)
 
         nx.draw_networkx(
@@ -163,8 +163,7 @@ def get_traffic_table(env: Primaite) -> pd.DataFrame:
 
 
 def get_nodes_table(env: Primaite) -> pd.DataFrame:
-    nodes = list(env.nodes.values())
-    nodes = [n for n in nodes if isinstance(n, ActiveNode)]
+    nodes = env.active_nodes
 
     nodes_dict = {
         "Name": [n.name for n in nodes],
@@ -207,70 +206,3 @@ def _is_working(node: Node) -> bool:
                 return False
 
     return True
-
-
-def get_traffic_level(link: Link) -> float:
-    """Get a trafic level for the link from 0 to 1"""
-    return link.get_current_load() / link.get_bandwidth()
-
-
-def _verbose_node_action(action: int, env: Primaite) -> str:
-    readable_action = env.action_dict[action]
-    node_id = readable_action[0]
-    node_property = readable_action[1]
-    property_action = readable_action[2]
-    service_index = readable_action[3]
-
-    if node_id == 0:
-        return "No action"
-
-    node = env.nodes[str(node_id)]
-    node_name = node.name
-
-    # PROPERTY
-    match node_property:
-        case 1:
-            state = "Hardware State"
-            match property_action:
-                case 1:
-                    act = "TURN ON"
-                case 2:
-                    act = "TURN OFF"
-                case 3:
-                    act = "RESET"
-                case _:
-                    return "No action"
-        case 2:
-            state = "Software State"
-            match property_action:
-                case 1:
-                    act = "PATCH"
-                case _:
-                    return "No action"
-        case 4:
-            state = "File System State"
-            match property_action:
-                case 1:
-                    act = "SCAN"
-                case 2:
-                    act = "REPAIR"
-                case 3:
-                    act = "RESTORE"
-                case _:
-                    return "No action"
-        case 3:
-            # Service State
-            protocol = env.services_list[service_index]
-            state = protocol + " Service State"
-
-            match property_action:
-                case 1:
-                    act = "PATCH"
-                case _:
-                    return "No action"
-
-        case _:
-            # todo: validate action separately
-            return "No action"
-
-    return f"Action :red[{act}] was taken on node :blue[{node_name}]'s :violet[{state}]"

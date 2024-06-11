@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from primaite.agents.env_state import _verbose_node_action, EnvironmentState
+from primaite.action import NodeAction
+from primaite.environment.env_state import EnvironmentState
 
 
 def display_env_state(env_state: EnvironmentState):
@@ -25,9 +26,10 @@ def display_env_state(env_state: EnvironmentState):
             fig = env_state.display_network()
             st.pyplot(fig)
     with col_agent:
-        if env_state.action is not None:
+        if env_state.action_id is not None:
             st.write("**:blue[Blue Agent:]**")
-            action_verbose = _verbose_node_action(env_state.action, env_state.env)
+            action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
+            action_verbose = action.verbose(colored=True)
             st.markdown(action_verbose)
 
             if env_state.info is not None:

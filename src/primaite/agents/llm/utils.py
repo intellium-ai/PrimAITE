@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from primaite.agents.env_state import EnvironmentState
+from primaite.environment.env_state import EnvironmentState
 
 HARDWARE_STATE: Dict[int, str] = {0: "none", 1: "on", 2: "off", 3: "resetting", 4: "shutting down", 5: "booting"}
 SOFTWARE_STATE: Dict[int, str] = {0: "none", 1: "good", 2: "patching", 3: "compromised", 4: "overwhelmed"}
@@ -52,7 +52,7 @@ def obs_view_full(env_state: EnvironmentState) -> str:
 
 def obs_diff(env_state: EnvironmentState) -> str:
 
-    obs_str = "Observed changes:\n" + "\n".join(env_state.obs_diff(colors=False))
+    obs_str = "\n".join(env_state.obs_diff(colors=False))
     return obs_str
 
 
