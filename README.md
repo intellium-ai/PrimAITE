@@ -1,3 +1,9 @@
+# Intelli - Setup instructions
+`python3 -m venv venv`
+
+`pip install -e '.[dev]'`
+Go!
+
 # PrimAITE
 
 ![image](./PrimAITE_logo_transparent.png)

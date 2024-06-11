@@ -4,6 +4,9 @@
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
+import pandas as pd
+
+from primaite.environment.env_state import EnvironmentState
 
 HARDWARE_STATE: Dict[int, str] = {0: "none", 1: "on", 2: "off", 3: "resetting", 4: "shutting down", 5: "booting"}
 SOFTWARE_STATE: Dict[int, str] = {0: "none", 1: "good", 2: "patching", 3: "compromised", 4: "overwhelmed"}
@@ -16,6 +19,41 @@ TRAFFIC_LEVEL: Dict[int, str] = {
     3: "high traffic",
     4: "overwhelmed",
 }
+
+
+def network_connectivity_desc(env_state: EnvironmentState) -> str:
+    # List nodes
+    desc = "Network description:"
+    nodes = list(env_state.nodes.values())
+    nodes_df = pd.DataFrame({"Name": [n.name for n in nodes], "Type": [n.node_type.name for n in nodes]})
+    desc += "\nNodes:\n" + nodes_df.to_json(orient="records")
+    links = list(env_state.links.values())
+    links_df = pd.DataFrame(
+        {
+            "Name": list(env_state.links.keys()),
+            "Source Node": [l.source_node_name for l in links],
+            "Destination Node": [l.dest_node_name for l in links],
+        }
+    )
+    desc += "\nLinks:\n" + links_df.to_json(orient="records")
+
+    return desc
+
+
+def obs_view_full(env_state: EnvironmentState) -> str:
+    obs_str = "Observation Space:"
+    nodes = env_state.nodes_table.to_json(orient="records")
+    obs_str += "\n\nNode Status:\n" + nodes
+    links = env_state.traffic_table.to_json(orient="records")
+    obs_str += "\n\nTraffic Status:\n" + links
+
+    return obs_str
+
+
+def obs_diff(env_state: EnvironmentState) -> str:
+
+    obs_str = "\n".join(env_state.obs_diff(colors=False))
+    return obs_str
 
 
 def init_labels(num_services) -> List[str]:

@@ -6,7 +6,7 @@
 # "SB3" (Stable Baselines3)
 # "RLLIB" (Ray RLlib)
 # "CUSTOM" (Custom Agent)
-agent_framework: SB3
+agent_framework: CUSTOM
 
 # Sets which deep learning framework will be used (by RLlib ONLY).
 # Default is TF (Tensorflow).
@@ -24,7 +24,7 @@ deep_learning_framework: TF2
 # "DO_NOTHING" (The DoNothing agents coupled with an ACL or NODE action_type)
 # "RANDOM" (primaite.agents.simple.RandomAgent)
 # "DUMMY" (primaite.agents.simple.DummyAgent)
-agent_identifier: PPO
+agent_identifier: RANDOM
 
 # Sets whether Red Agent POL and IER is randomised.
 # Options are:

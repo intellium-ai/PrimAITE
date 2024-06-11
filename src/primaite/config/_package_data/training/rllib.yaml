@@ -6,7 +6,7 @@
 # "SB3" (Stable Baselines3)
 # "RLLIB" (Ray RLlib)
 # "CUSTOM" (Custom Agent)
-agent_framework: SB3
+agent_framework: RLLIB
 
 # Sets which deep learning framework will be used (by RLlib ONLY).
 # Default is TF (Tensorflow).
