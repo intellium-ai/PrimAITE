@@ -1,10 +1,10 @@
 - item_type: PORTS
   ports_list:
-  - port: '12'
-  - port: '46'
+  - port: '49'
+  - port: '66'
 - item_type: SERVICES
   service_list:
-  - name: UDP
+  - name: TCP_SQL
   - name: TCP
 - file_system_state: GOOD
   hardware_state: 'ON'
@@ -16,8 +16,8 @@
   node_type: CCTV
   priority: P1
   services:
-  - name: UDP
-    port: 12
+  - name: TCP_SQL
+    port: 49
     state: GOOD
   software_state: GOOD
 - file_system_state: GOOD
@@ -30,8 +30,8 @@
   node_type: SWITCH
   priority: P1
   services:
-  - name: UDP
-    port: 12
+  - name: TCP_SQL
+    port: 49
     state: GOOD
   software_state: GOOD
 - file_system_state: GOOD
@@ -44,8 +44,8 @@
   node_type: COMPUTER
   priority: P1
   services:
-  - name: UDP
-    port: 12
+  - name: TCP_SQL
+    port: 49
     state: GOOD
   software_state: GOOD
 - bandwidth: 100000000
