@@ -9,6 +9,7 @@ from primaite.common.enums import (
     FileSystemState,
     HardwareState,
     LinkStatus,
+    NodeFileSystemAction,
     NodeHardwareAction,
     NodePOLType,
     NodeSoftwareAction,
@@ -37,6 +38,8 @@ def transform_action_node_readable(action: List[int]) -> List[Union[int, str]]:
         property_action = NodeHardwareAction(action[2]).name
     elif (action_node_property == "OS" or action_node_property == "SERVICE") and action[2] <= 1:
         property_action = NodeSoftwareAction(action[2]).name
+    elif action_node_property == "FILE":
+        property_action = NodeFileSystemAction(action[2]).name
     else:
         property_action = "NONE"
 

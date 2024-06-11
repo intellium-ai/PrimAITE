@@ -156,7 +156,17 @@ class NodeAction(BaseModel):
     @cached_property
     def action_id(self) -> int:
         action_dict = self.env.action_dict
-        return next(k for k, v in action_dict.items() if v == self.numerical)
+        try:
+            id = next(k for k, v in action_dict.items() if v == self.numerical)
+        except BaseException:
+            print("numerical repr of action:")
+            print(self.numerical)
+            print("action dict:")
+            for k, v in action_dict.items():
+                print(v)
+            raise ValueError(f"Could not find a valid id in the action dict for action {self.as_text}.")
+
+        return id
 
     def has_effect(self) -> bool:
         return (

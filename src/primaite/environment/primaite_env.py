@@ -1199,8 +1199,8 @@ class Primaite(Env):
         actions = {0: [0, 0, 0, 0]}
         action_key = 1
         for node in range(1, self.num_nodes + 1):
-            # 4 node properties (NONE, OPERATING, OS, SERVICE)
-            for node_property in range(4):
+            # 4 node properties (NONE, OPERATING, OS, SERVICE, FILE_SYSTEM)
+            for node_property in range(5):
                 # Node Actions either:
                 # (NONE, ON, OFF, RESET) - operating state OR (NONE, PATCH) - OS/service state
                 # Use MAX to ensure we get them all

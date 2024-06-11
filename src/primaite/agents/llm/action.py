@@ -8,12 +8,14 @@ from primaite.environment import Primaite
 NODE_ACTION_SPACE_DESCRIPTION = """
 As an agent, you are able to influence the status of nodes by switching them off, resetting, or patching operating systems and services. Every turn, you may choose to take an action on one of the nodes. If choosing not to take any action, return nothing. Note that actions are expensive and can negatively impact the environment if used improperly. For instance, a server which is turned off cannot receive requests from the users and will decrease the reward.  
 
+Before taking the action, provide a quick explanation for your reason, given the observation space provided.
+
 If choosing to take an action, you must select a node by name, from the following list: {node_names}. Assuming the selected node name is NODE_NAME, the following are the valid actions you can take:
 
-Action: node_name=NODE_NAME node_property='HARDWARE' property_action='ON'
+Action: node_name=NODE_NAME node_property='HARDWARE' property_action='TURN_ON'
 Description: Boots the node. Only applicable if node was turned off.
 
-Action: node_name=NODE_NAME node_property='HARDWARE' property_action='OFF'
+Action: node_name=NODE_NAME node_property='HARDWARE' property_action='TURN_OFF'
 Description: Turn the node off. 
 
 Action: node_name=NODE_NAME node_property='HARDWARE' property_action='RESET'
@@ -38,7 +40,7 @@ The following actions are only applicable if the node owns services. If choosing
 Action: node_name=NODE_NAME node_property='SERVICE' property_action='PATCH' service_name=SERVICE_NAME
 Description: Patches the service for a number of steps, after which the status of the service returns to 'GOOD'.
 
-Before taking the action, provide a quick explanation for your reason, given the observation space provided.
+
 """
 
 
@@ -50,7 +52,7 @@ def get_action_space_description(env: Primaite) -> str:
 
 
 class AgentNodeAction(BaseModel):
-    reasoning: str = Field(..., description="Rationale for taking the action.")
+    # reasoning: str = Field(..., description="Rationale for taking the action.")
     node_name: str = Field("NONE", description="Node to apply action to.")
     node_property: Literal["NONE", "HARDWARE", "SOFTWARE", "FILE_SYSTEM", "SERVICE"] = Field(
         "NONE", description="Node property to apply action to."

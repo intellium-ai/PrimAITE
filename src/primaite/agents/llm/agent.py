@@ -60,12 +60,12 @@ class LLM:
         messages = [("user", user_msg), ("assistant", "Acknowledged.")]
 
         # History of actions
-        hist = "This is the history of observed changes and defensive actions you have taken, at each step.\n"
+        hist = "This is the history of observed changes and defensive actions you have taken, at each step. If nothing happened at a specific step, it is omitted from the history.\n"
         for i, state in enumerate(env_history[1:]):
             observed_changes = obs_diff(state)
             action_id = state.action_id
 
-            if observed_changes != "" and action_id:
+            if observed_changes != "" or action_id:
                 hist += f"\nStep {i}:"
 
                 if observed_changes != "":
@@ -98,7 +98,11 @@ class LLM:
             _LOGGER.exception(f"LLM generated invalid json: {generated_text}")
         _LOGGER.info(f"Action: \n{agent_action}")
 
-        action = agent_action.to_node_action(env=env)
+        try:
+            action = agent_action.to_node_action(env=env)
+        except BaseException:
+            _LOGGER.info(f"Invalid LLM action: \n{agent_action}")
+            action = NodeAction(env=env)
         action_id = action.action_id
 
         return action_id, prompt
