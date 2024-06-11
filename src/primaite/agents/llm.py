@@ -11,7 +11,8 @@ from text_generation.types import Grammar, GrammarType
 
 from primaite import getLogger
 from primaite.agents.agent_abc import AgentSessionABC
-from primaite.agents.utils import split_obs_space, transform_nodelink_readable, transform_nodestatus_readable
+from primaite.agents.env_state import _verbose_node_action, EnvironmentState
+from primaite.agents.llm_utils import network_connectivity_desc, obs_diff, obs_view_full
 from primaite.common.enums import AgentFramework, AgentIdentifier
 from primaite.environment.primaite_env import Primaite
 
@@ -46,31 +47,31 @@ class LLM:
     def __init__(self, base_url: str, timeout: int = 60) -> None:
         self.client = Client(base_url=base_url, timeout=timeout)
 
-    def predict(
-        self,
-        observation: np.ndarray,
-        deterministic: bool,
-        num_nodes: int,
-        num_links: int,
-        num_services: int,
-    ) -> int:
+    def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]):
+        # Task explanation
+        system_msg = "You are a cyber-defensive agent. Your mission is to protect a network against red agent attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols."
 
-        # _LOGGER.info(f"\n{observation}")
-        # _LOGGER.info(f"\n{transform_nodelink_readable(observation)}")
+        # Initial environment
+        initial_state = env_history[0]
+        initial_env = f"{network_connectivity_desc(initial_state)}\n\nInitial {obs_view_full(initial_state)}"
+        user_msg = f"This is the initial configuration of the network:\n{initial_env}"
+        messages = [("user", user_msg), ("assistant", "Acknowledged.")]
 
-        # system_msg = "You are a defensive agent "
+        # History of actions
+        hist = "This is the history of observed changes and defensive actions you have taken, at each step.\n"
+        for i, state in enumerate(env_history[1:]):
+            hist += f"\nStep {i}:"
+            if obs_diff != "":
+                hist += f"\n{obs_diff(state)}"
+            if state.action is not None:
+                hist += f"\n{_verbose_node_action(state.action, state.env)}"
+        messages += [("user", hist), ("assistant", "Acknowledged.")]
 
-        # user_msg = f"""
-        # Based purely on the description you have been given, say if any node has been compromised. If you do not see any issues, return 'ok'.
+        # Current observation
+        response = f"Now, the current observation space is {obs_view_full(env_state)} and the changes that have occured are: {obs_diff(env_state)}. Please take a suitable action. Action: "
+        messages.append(("user", response))
 
-        # Network:
-
-        # {observation}
-
-        # Vulnerabilities:
-        # """
-        # prompt = format_llama_prompt(system_msg, [("user", user_msg)])
-        # _LOGGER.info(f"{prompt}")
+        prompt = format_llama_prompt(system_msg, messages)
         # response = self.client.generate(
         #     prompt=prompt, grammar=Grammar(type=GrammarType.Json, value=Action.model_json_schema())
         # )
@@ -78,7 +79,7 @@ class LLM:
         # action = Action(**json.loads(generated_text))
         # _LOGGER.info(f"\n{action}")
 
-        return 0
+        return 0, prompt
 
 
 class LLMAgent(AgentSessionABC):
@@ -102,11 +103,29 @@ class LLMAgent(AgentSessionABC):
         )
         self._agent = LLM(base_url="http://192.168.0.8:58084")
 
+        # Keep track of env history
+        self.env_history = [EnvironmentState(self._env)]
+
     def _save_checkpoint(self) -> None:
         _LOGGER.warning("Deterministic agents cannot learn")
 
     def learn(self):
         _LOGGER.warning("Deterministic agents cannot learn")
+
+    def _calculate_action(self, obs: np.ndarray):
+        action, info = self._calculate_action_info(obs)
+
+        return action
+
+    def _calculate_action_info(self, obs: np.ndarray) -> tuple[int, str | None]:
+        prev_env_state = self.env_history[-1]
+        env_state = EnvironmentState(self._env, prev_env_state=prev_env_state)
+
+        action, info = self._agent.predict(env_state, self.env_history)
+        env_state.action = action
+        self.env_history.append(env_state)
+
+        return action, info
 
     def evaluate(
         self,
@@ -129,13 +148,7 @@ class LLMAgent(AgentSessionABC):
             done, steps, rew = False, 0, 0
             while steps < time_steps and not done:
 
-                action = self._agent.predict(
-                    obs,
-                    deterministic=self._training_config.deterministic,
-                    num_nodes=self._env.num_nodes,
-                    num_links=self._env.num_links,
-                    num_services=self._env.num_services,
-                )
+                action = self._calculate_action(obs)
 
                 obs, rewards, done, info = self._env.step(action=action)
                 steps += 1
