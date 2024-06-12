@@ -26,6 +26,10 @@ def display_env_state(env_state: EnvironmentState):
             fig = env_state.display_network()
             st.pyplot(fig)
     with col_agent:
+        st.write("**Observation Space Changes:**")
+        for change in env_state.obs_diff(colors=True):
+            st.markdown(change)
+
         if env_state.action_id is not None:
             st.write("**:blue[Blue Agent:]**")
             action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
@@ -34,9 +38,5 @@ def display_env_state(env_state: EnvironmentState):
 
             if env_state.info is not None:
                 with st.expander("Info"):
-                    st.write(env_state.info)
+                    st.markdown(f"<pre>{env_state.info}</pre>", unsafe_allow_html=True)  # HTML to stop markdown parsing
             st.divider()
-
-        st.write("**Observation Space Changes:**")
-        for change in env_state.obs_diff(colors=True):
-            st.markdown(change)

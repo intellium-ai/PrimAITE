@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
 from typing import Any, Literal
-
+from termcolor import colored
 import numpy as np
 from pydantic import BaseModel
 from text_generation import Client
@@ -47,10 +47,10 @@ class LLM:
 
     def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]):
         # Task explanation
-        system_msg = "You are a cyber-defensive agent. Your mission is to protect a network against red agent attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols. The current link traffic is displayed as a percentage of its total bandwidth, for each possible protocol. The red agent is trying to compromise the network, by either directly incapacitating the nodes HARDWARE, SOFTWARE or FILE_SYSTEM states, or indirectly overwhelming the nodes through denial-of-service type attacks. \n"
+        system_msg = "You are a cybersecurity network defence agent. Your mission is to protect a network against offensive attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols. The current link traffic is displayed as a percentage of its total bandwidth, for each possible protocol. An attacker is trying to compromise the network, by either directly incapacitating the nodes HARDWARE, SOFTWARE or FILE_SYSTEM states, or indirectly overwhelming the nodes through Denial-of-Service type attacks.\n"
         env = env_state.env
         # Action space description
-        action_space_desc = get_action_space_description(env_state.env)
+        action_space_desc = get_action_space_description(env_state)
         system_msg += action_space_desc
 
         # Initial environment
@@ -60,7 +60,7 @@ class LLM:
         messages = [("user", user_msg), ("assistant", "Acknowledged.")]
 
         # History of actions
-        hist = "This is the history of observed changes and defensive actions you have taken, at each step. If nothing happened at a specific step, it is omitted from the history.\n"
+        hist = "This is the history of offensive action observations and defensive actions you have taken at each step. If nothing happened at a specific step, it is omitted from the history.\n"
         for i, state in enumerate(env_history[1:]):
             observed_changes = obs_diff(state)
             action_id = state.action_id
@@ -69,7 +69,7 @@ class LLM:
                 hist += f"\nStep {i}:"
 
                 if observed_changes != "":
-                    hist += f"\nChanges:\n{observed_changes}"
+                    hist += f"\n{observed_changes}"
                 if action_id is not None:
                     action = NodeAction.from_id(env=env, action_id=action_id)
                     action_verbose = action.verbose(colored=False)
@@ -78,30 +78,32 @@ class LLM:
         messages += [("user", hist), ("assistant", "Acknowledged.")]
 
         # Current observation and action prompt
-        curr_obs = f"Now, the current observation space is {obs_view_full(env_state)} and the changes that have occured since last observation are: {obs_diff(env_state)}"
+        curr_obs = f"Now, the current observation space is {obs_view_full(env_state)} and the changes that have occured since last observation are: {obs_diff(env_state)} "
         _LOGGER.info("\n\n")
-        _LOGGER.info(f"Observed changes: {obs_diff(env_state)}\n")
+        _LOGGER.info(f"{colored('Observed changes', 'yellow')}: {obs_diff(env_state)}\n")
 
         action_prompt = "Please take a suitable action. Action: "
         messages.append(("user", curr_obs + action_prompt))
-
+        grammar_json = AgentNodeAction.model_json_schema()
+        grammar_json["properties"]["node_name"]["enum"] = [n.name for n in env.active_nodes]
         prompt = format_llama_prompt(system_msg, messages)
         response = self.client.generate(
             prompt=prompt,
             grammar=Grammar(type=GrammarType.Json, value=AgentNodeAction.model_json_schema()),
             max_new_tokens=300,
+            repetition_penalty=1.2,
         )
         generated_text = response.generated_text
         try:
             agent_action = AgentNodeAction(**json.loads(generated_text))
         except BaseException:
             _LOGGER.exception(f"LLM generated invalid json: {generated_text}")
-        _LOGGER.info(f"Action: \n{agent_action}")
+        _LOGGER.info(f"{colored('Action', 'green')}: {agent_action}")
 
         try:
             action = agent_action.to_node_action(env=env)
         except BaseException:
-            _LOGGER.info(f"Invalid LLM action: \n{agent_action}")
+            _LOGGER.info(f"Invalid LLM action: {agent_action}")
             action = NodeAction(env=env)
         action_id = action.action_id
 
@@ -127,7 +129,7 @@ class LLMAgent(AgentSessionABC):
             session_path=self.session_path,
             timestamp_str=self.timestamp_str,
         )
-        self._agent = LLM(base_url="http://192.168.0.8:58084")
+        self._agent = LLM(base_url="http://192.168.0.8:58084", timeout=120)
 
         # Keep track of env history
         self.env_history = [EnvironmentState(self._env)]
