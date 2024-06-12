@@ -1,5 +1,5 @@
 {
-    "end_datetime": "2024-06-11T15:59:13.114200",
+    "end_datetime": null,
     "env": {
         "lay_down_config": [
             {
@@ -800,13 +800,13 @@
         }
     },
     "evaluation": {
-        "total_episodes": 8,
-        "total_time_steps": 1024
+        "total_episodes": null,
+        "total_time_steps": null
     },
     "learning": {
-        "total_episodes": 512,
-        "total_time_steps": 65536
+        "total_episodes": null,
+        "total_time_steps": null
     },
-    "start_datetime": "2024-06-11T15:56:04.963860",
+    "start_datetime": "2024-06-12T09:17:57.262410",
     "uuid": "0b401df6-3297-4f14-be9c-50edbe3bb55f"
 }
