@@ -127,20 +127,27 @@ class LLM:
         # messages = [("user", prompt), ("assistant", "Acknowledged.")]???
 
         # Build the history of actions
-        obs_act_history = HISTORY_PREFIX
+        obs_act_history = HISTORY_PREFIX if env_history else ""
+        history_list = []
         for i, state in enumerate(env_history[1:]):
             observed_changes = obs_diff(state)
             action_id = state.action_id
 
             if observed_changes != "" or action_id:
-                obs_act_history += f"\nStep {i}:"
+                history_list.append(f"\nStep {i}:")
+                # obs_act_history += f"\nStep {i}:"
 
                 if observed_changes != "":
-                    obs_act_history += f"\n{observed_changes}"
+                    history_list[-1] += f"\n{observed_changes}"
+                    # obs_act_history += f"\n{observed_changes}"
                 if action_id is not None:
                     action = NodeAction.from_id(env=env, action_id=action_id)
                     action_verbose = action.verbose(colored=False)
-                    obs_act_history += f"\nAction: {action_verbose}\n"
+                    history_list[-1] += f"\nAction: {action_verbose}\n"
+                    # obs_act_history += f"\nAction: {action_verbose}\n"
+
+        obs_act_history += "".join(history_list[-20:])  # Only show the last 20 obs act events
+        print("OBS ACT HISTORY:\n", obs_act_history)
 
         # Current observation and action prompt
         current_obs = CURRENT_OBS.format(obs_view_full=obs_view_full(env_state), obs_diff=obs_diff(env_state))
