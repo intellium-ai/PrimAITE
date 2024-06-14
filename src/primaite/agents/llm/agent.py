@@ -2,23 +2,32 @@ import json
 from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Optional, Type, TypeVar, Dict, List
 from termcolor import colored
 import numpy as np
 from pydantic import BaseModel
 from text_generation import Client
 from text_generation.types import Grammar, GrammarType
-
 from primaite import getLogger
 from primaite.action import NodeAction
 from primaite.agents.agent_abc import AgentSessionABC
-from primaite.agents.llm.action import AgentNodeAction, get_action_space_description
 from primaite.agents.llm.utils import network_connectivity_desc, obs_diff, obs_view_full
 from primaite.common.enums import AgentFramework, AgentIdentifier
 from primaite.environment.env_state import EnvironmentState
 from primaite.environment.primaite_env import Primaite
+from primaite.exceptions import LLMGrammarError
+from outlines.fsm.json_schema import build_regex_from_schema
+from primaite.agents.llm.prompting import (
+    SYSTEM_MSG,
+    NODE_ACTION_SPACE_DESCRIPTION,
+    HISTORY_PREFIX,
+    CURRENT_OBS,
+    ACTION_PROMPT,
+    AgentNodeAction,
+)
 
 _LOGGER: Logger = getLogger(__name__)
+T = TypeVar("T", bound=BaseModel)
 
 
 def format_llama_prompt(system: str, messages: list[tuple[Literal["user", "assistant"], str]]) -> str:
@@ -45,60 +54,117 @@ class LLM:
     def __init__(self, base_url: str, timeout: int = 60) -> None:
         self.client = Client(base_url=base_url, timeout=timeout)
 
-    def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]):
-        # Task explanation
-        system_msg = "You are a cybersecurity network defence agent. Your mission is to protect a network against offensive attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols. The current link traffic is displayed as a percentage of its total bandwidth, for each possible protocol. An attacker is trying to compromise the network, by either directly incapacitating the nodes HARDWARE, SOFTWARE or FILE_SYSTEM states, or indirectly overwhelming the nodes through Denial-of-Service type attacks.\n"
+    def generate(
+        self, prompt: str, repetition_penalty: Optional[float] = None, max_new_tokens: Optional[int] = 1024
+    ) -> str:
+        response = self.client.generate(
+            prompt=prompt, max_new_tokens=max_new_tokens, repetition_penalty=repetition_penalty
+        )
+        return response.generated_text
+
+    def generate_model(
+        self,
+        prompt: str,
+        model: Type[T],
+        repetition_penalty: Optional[float] = None,
+        max_new_tokens: Optional[int] = 1024,
+        new_literals: Optional[Dict[str, List]] = None,
+    ) -> T:
+
+        model_schema = model.model_json_schema()
+        if new_literals:
+            # For each set of literals (referred to as enums) passed, add to the schema for the respective property.
+            for prop, enum in new_literals.items():
+                model_schema["properties"][prop]["enum"] = enum
+
+        # Convert json schema to regex to preserve property order during generation
+        model_json = json.dumps(model_schema, indent=2)
+        model_regex = build_regex_from_schema(model_json)
+
+        # Generate response for regex
+        response = self.client.generate(
+            prompt=prompt,
+            grammar=Grammar(type=GrammarType.Regex, value=model_regex),
+            max_new_tokens=max_new_tokens,
+            repetition_penalty=repetition_penalty,
+        ).generated_text
+
+        try:
+            # Parse response
+            response_model = model(**json.loads(response))
+            _LOGGER.info(f"{colored('Action', 'green')}: {response_model}")
+        except json.JSONDecodeError as e:
+            # Grammar didn't work
+            raise LLMGrammarError(f"LLM did not produce valid grammar JSON schema: {e}. Generated: {response}")
+        except Exception as e:
+            raise Exception(e)
+
+        return response_model
+
+    def _get_action_space_description(self, env_state: EnvironmentState) -> str:
         env = env_state.env
-        # Action space description
-        action_space_desc = get_action_space_description(env_state)
-        system_msg += action_space_desc
+        node_names = "'" + ", ".join([n.name for n in env.active_nodes]) + "'"  # Nice comma separated list
+        service_names = "'" + ", ".join(env.services_list) + "'"
 
-        # Initial environment
+        action_space_description = NODE_ACTION_SPACE_DESCRIPTION.format(
+            node_names=node_names, service_names=service_names
+        )
+        return action_space_description
+
+    def _build_prompt(self, env_state: EnvironmentState, env_history: list[EnvironmentState]) -> str:
+        prompt = ""
+
+        # Get the action space description
+        env = env_state.env
         initial_state = env_history[0]
-        initial_env = f"{network_connectivity_desc(initial_state)}\n\nInitial {obs_view_full(initial_state)}"
-        user_msg = f"This is the initial configuration of the network:\n{initial_env}"
-        messages = [("user", user_msg), ("assistant", "Acknowledged.")]
+        # Initial environment
+        initial_env_desc = f"This is the initial configuration of the network:\n{network_connectivity_desc(initial_state)}\n\nInitial {obs_view_full(initial_state)}"
 
-        # History of actions
-        hist = "This is the history of offensive action observations and defensive actions you have taken at each step. If nothing happened at a specific step, it is omitted from the history.\n"
+        node_names = "'" + ", ".join([n.name for n in env.active_nodes]) + "'"  # Nice comma separated list
+        service_names = "'" + ", ".join(env.services_list) + "'"
+        action_space = NODE_ACTION_SPACE_DESCRIPTION.format(node_names=node_names, service_names=service_names)
+
+        # messages = [("user", prompt), ("assistant", "Acknowledged.")]???
+
+        # Build the history of actions
+        obs_act_history = HISTORY_PREFIX
         for i, state in enumerate(env_history[1:]):
             observed_changes = obs_diff(state)
             action_id = state.action_id
 
             if observed_changes != "" or action_id:
-                hist += f"\nStep {i}:"
+                obs_act_history += f"\nStep {i}:"
 
                 if observed_changes != "":
-                    hist += f"\n{observed_changes}"
+                    obs_act_history += f"\n{observed_changes}"
                 if action_id is not None:
                     action = NodeAction.from_id(env=env, action_id=action_id)
                     action_verbose = action.verbose(colored=False)
-                    hist += f"\nAction:\n{action_verbose}\n"
-
-        messages += [("user", hist), ("assistant", "Acknowledged.")]
+                    obs_act_history += f"\nAction: {action_verbose}\n"
 
         # Current observation and action prompt
-        curr_obs = f"Now, the current observation space is {obs_view_full(env_state)} and the changes that have occured since last observation are: {obs_diff(env_state)} "
+        current_obs = CURRENT_OBS.format(obs_view_full=obs_view_full(env_state), obs_diff=obs_diff(env_state))
         _LOGGER.info("\n\n")
         _LOGGER.info(f"{colored('Observed changes', 'yellow')}: {obs_diff(env_state)}\n")
 
-        action_prompt = "Please take a suitable action. Action: "
-        messages.append(("user", curr_obs + action_prompt))
-        grammar_json = AgentNodeAction.model_json_schema()
-        grammar_json["properties"]["node_name"]["enum"] = [n.name for n in env.active_nodes]
-        prompt = format_llama_prompt(system_msg, messages)
-        response = self.client.generate(
+        prompt += initial_env_desc + obs_act_history + action_space + current_obs + ACTION_PROMPT
+        messages = [("user", prompt)]
+        prompt = format_llama_prompt(SYSTEM_MSG, messages)
+
+        return prompt
+
+    def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]):
+        env = env_state.env
+        # BUILD PROMPT HERE
+        prompt = self._build_prompt(env_state=env_state, env_history=env_history)
+        print("NEW PROMPT::\n", prompt)
+
+        agent_action = self.generate_model(
             prompt=prompt,
-            grammar=Grammar(type=GrammarType.Json, value=AgentNodeAction.model_json_schema()),
-            max_new_tokens=300,
-            repetition_penalty=1.2,
+            model=AgentNodeAction,
+            repetition_penalty=1.1,
+            new_literals={"node_name": [n.name for n in env.active_nodes] + ["NONE"]},
         )
-        generated_text = response.generated_text
-        try:
-            agent_action = AgentNodeAction(**json.loads(generated_text))
-        except BaseException:
-            _LOGGER.exception(f"LLM generated invalid json: {generated_text}")
-        _LOGGER.info(f"{colored('Action', 'green')}: {agent_action}")
 
         try:
             action = agent_action.to_node_action(env=env)
@@ -106,7 +172,7 @@ class LLM:
             _LOGGER.info(f"Invalid LLM action: {agent_action}")
             action = NodeAction(env=env)
         action_id = action.action_id
-
+        prompt
         return action_id, prompt
 
 
