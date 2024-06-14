@@ -50,7 +50,7 @@ Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action'
 Description: If it is currently on, will turn it off.
 
 Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'RESET'}}
-Description: Resets the hardware after a number of steps. Only works if the node is turned on. Resets the status of the software, file system and services to 'GOOD'.
+Description: Resets the hardware after a number of steps. Only works if the node is turned on. Resets the status of the software, file system and services back to 'GOOD'.
 
 ## SOFTWARE Actions:
 Action: {{'node_name':'NODE_NAME', 'node_property':'SOFTWARE', 'property_action':'PATCH'}}

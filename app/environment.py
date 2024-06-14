@@ -38,5 +38,5 @@ def display_env_state(env_state: EnvironmentState):
 
             if env_state.info is not None:
                 with st.expander("Info"):
-                    st.markdown(f"<pre>{env_state.info}</pre>", unsafe_allow_html=True)  # HTML to stop markdown parsing
+                    st.markdown(f"{env_state.info}")  # HTML to stop markdown parsing
             st.divider()

@@ -147,7 +147,6 @@ class LLM:
                     # obs_act_history += f"\nAction: {action_verbose}\n"
 
         obs_act_history += "".join(history_list[-20:])  # Only show the last 20 obs act events
-        print("OBS ACT HISTORY:\n", obs_act_history)
 
         # Current observation and action prompt
         current_obs = CURRENT_OBS.format(obs_view_full=obs_view_full(env_state), obs_diff=obs_diff(env_state))
@@ -164,7 +163,6 @@ class LLM:
         env = env_state.env
         # BUILD PROMPT HERE
         prompt = self._build_prompt(env_state=env_state, env_history=env_history)
-        print("NEW PROMPT::\n", prompt)
 
         agent_action = self.generate_model(
             prompt=prompt,
