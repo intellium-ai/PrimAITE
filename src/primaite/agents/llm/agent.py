@@ -19,10 +19,9 @@ from primaite.exceptions import LLMGrammarError
 from outlines.fsm.json_schema import build_regex_from_schema
 from primaite.agents.llm.prompting import (
     SYSTEM_MSG,
-    NODE_ACTION_SPACE_DESCRIPTION,
-    HISTORY_PREFIX,
-    CURRENT_OBS,
-    ACTION_PROMPT,
+    REASON_ACTION_SPACE_NODE_SELECT,
+    NODE_ACTION_SELECTION,
+    AgentReasoningNodeSelection,
     AgentNodeAction,
 )
 
@@ -101,33 +100,18 @@ class LLM:
 
         return response_model
 
-    def _get_action_space_description(self, env_state: EnvironmentState) -> str:
-        env = env_state.env
-        node_names = "'" + ", ".join([n.name for n in env.active_nodes]) + "'"  # Nice comma separated list
-        service_names = "'" + ", ".join(env.services_list) + "'"
-
-        action_space_description = NODE_ACTION_SPACE_DESCRIPTION.format(
-            node_names=node_names, service_names=service_names
-        )
-        return action_space_description
-
-    def _build_prompt(self, env_state: EnvironmentState, env_history: list[EnvironmentState]) -> str:
+    def _build_reasoning_prompt(self, env_state: EnvironmentState, env_history: list[EnvironmentState]) -> str:
         prompt = ""
 
         # Get the action space description
         env = env_state.env
         initial_state = env_history[0]
-        # Initial environment
-        initial_env_desc = f"This is the initial configuration of the network:\n{network_connectivity_desc(initial_state)}\n\nInitial {obs_view_full(initial_state)}"
 
         node_names = "'" + ", ".join([n.name for n in env.active_nodes]) + "'"  # Nice comma separated list
         service_names = "'" + ", ".join(env.services_list) + "'"
-        action_space = NODE_ACTION_SPACE_DESCRIPTION.format(node_names=node_names, service_names=service_names)
-
-        # messages = [("user", prompt), ("assistant", "Acknowledged.")]???
 
         # Build the history of actions
-        obs_act_history = HISTORY_PREFIX if env_history else ""
+        obs_act_history = "" if env_history else "NO OBSERVATION HISTORY"
         history_list = []
         for i, state in enumerate(env_history[1:]):
             observed_changes = obs_diff(state)
@@ -135,25 +119,73 @@ class LLM:
 
             if observed_changes != "" or action_id:
                 history_list.append(f"\nStep {i}:")
-                # obs_act_history += f"\nStep {i}:"
 
                 if observed_changes != "":
                     history_list[-1] += f"\n{observed_changes}"
-                    # obs_act_history += f"\n{observed_changes}"
+
                 if action_id is not None:
                     action = NodeAction.from_id(env=env, action_id=action_id)
                     action_verbose = action.verbose(colored=False)
                     history_list[-1] += f"\nAction: {action_verbose}\n"
-                    # obs_act_history += f"\nAction: {action_verbose}\n"
 
-        obs_act_history += "".join(history_list[-20:])  # Only show the last 20 obs act events
+        obs_act_history += "".join(history_list[-20:])  # Only show up to the last 20 obs act events to avoid cloggage
 
-        # Current observation and action prompt
-        current_obs = CURRENT_OBS.format(obs_view_full=obs_view_full(env_state), obs_diff=obs_diff(env_state))
-        _LOGGER.info("\n\n")
-        _LOGGER.info(f"{colored('Observed changes', 'yellow')}: {obs_diff(env_state)}\n")
+        # Current observation space changes
+        _LOGGER.info(f"{colored('Observed changes', 'yellow')}: {obs_diff(env_state)}\n\n")
 
-        prompt += initial_env_desc + obs_act_history + action_space + current_obs + ACTION_PROMPT
+        prompt = REASON_ACTION_SPACE_NODE_SELECT.format(
+            node_names=node_names,
+            service_names=service_names,
+            network_connectivity_desc=network_connectivity_desc(initial_state),
+            initial_obs_view_full=obs_view_full(initial_state),
+            obs_act_history=obs_act_history,
+            current_obs_view_full=obs_view_full(env_state),
+            current_obs_diff=obs_diff(env_state),
+        )
+        messages = [("user", prompt)]
+        prompt = format_llama_prompt(SYSTEM_MSG, messages)
+
+        return prompt
+
+    def _build_action_prompt(
+        self, env_state: EnvironmentState, env_history: list[EnvironmentState], node_name: str, reasoning: str
+    ) -> str:
+        prompt = ""
+
+        # Get the action space description
+        env = env_state.env
+        initial_state = env_history[0]
+        service_names = "'" + ", ".join(env.services_list) + "'"
+
+        # Build the history of actions
+        obs_act_history = "" if env_history else "NO OBSERVATION HISTORY"
+        history_list = []
+        for i, state in enumerate(env_history[1:]):
+            observed_changes = obs_diff(state)
+            action_id = state.action_id
+
+            if observed_changes != "" or action_id:
+                history_list.append(f"\nStep {i}:")
+
+                if observed_changes != "":
+                    history_list[-1] += f"\n{observed_changes}"
+
+                if action_id is not None:
+                    action = NodeAction.from_id(env=env, action_id=action_id)
+                    action_verbose = action.verbose(colored=False)
+                    history_list[-1] += f"\nAction: {action_verbose}\n"
+        obs_act_history += "".join(history_list[-20:])  # Only show up to the last 20 obs act events to avoid cloggage
+
+        prompt = NODE_ACTION_SELECTION.format(
+            node_name=node_name,
+            reasoning=reasoning,
+            network_connectivity_desc=network_connectivity_desc(initial_state),
+            initial_obs_view_full=obs_view_full(initial_state),
+            obs_act_history=obs_act_history,
+            current_obs_view_full=obs_view_full(env_state),
+            current_obs_diff=obs_diff(env_state),
+            service_names=service_names,
+        )
         messages = [("user", prompt)]
         prompt = format_llama_prompt(SYSTEM_MSG, messages)
 
@@ -161,21 +193,40 @@ class LLM:
 
     def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]):
         env = env_state.env
-        # BUILD PROMPT HERE
-        prompt = self._build_prompt(env_state=env_state, env_history=env_history)
 
-        agent_action = self.generate_model(
+        # Think and decide which node to act on
+        prompt = self._build_reasoning_prompt(env_state=env_state, env_history=env_history)
+        agent_reason_select = self.generate_model(
             prompt=prompt,
-            model=AgentNodeAction,
+            model=AgentReasoningNodeSelection,
             repetition_penalty=1.1,
             new_literals={"node_name": [n.name for n in env.active_nodes] + ["NONE"]},
         )
+        reasoning = agent_reason_select.reasoning
+        node_selection = agent_reason_select.node_name
 
-        try:
-            action = agent_action.to_node_action(env=env)
-        except BaseException:
-            _LOGGER.info(f"Invalid LLM action: {agent_action}")
-            action = NodeAction(env=env)
+        # LLM chose to take an action on a node
+        if node_selection != "NONE":
+            # BUILD PROMPT HERE
+            prompt = self._build_action_prompt(
+                env_state=env_state, env_history=env_history, reasoning=reasoning, node_name=node_selection
+            )
+            agent_action = self.generate_model(
+                prompt=prompt,
+                model=AgentNodeAction,
+                repetition_penalty=1.1,
+                new_literals={"node_name": [n.name for n in env.active_nodes] + ["NONE"]},
+            )
+            try:
+                action = agent_action.to_node_action(env=env)
+            except BaseException:
+                _LOGGER.info(f"Invalid LLM action: {agent_action}")
+                action = NodeAction(env=env)
+
+        # LLM chose to take no action
+        else:
+            action = NodeAction(env=env)  # Does this count as 'no action'?
+
         action_id = action.action_id
         prompt
         return action_id, prompt

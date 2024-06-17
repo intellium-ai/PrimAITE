@@ -8,7 +8,6 @@ from primaite.environment.env_state import EnvironmentState
 
 
 class AgentNodeAction(BaseModel):
-    reasoning: str = Field(..., description="Rationale for taking the action.")
     node_name: str = Field("NONE", description="Node to apply action to.")
     node_property: Literal["NONE", "HARDWARE", "SOFTWARE", "FILE_SYSTEM", "SERVICE"] = Field(
         "NONE", description="Node property to apply action to."
@@ -28,6 +27,13 @@ class AgentNodeAction(BaseModel):
         )
 
 
+class AgentReasoningNodeSelection(BaseModel):
+    reasoning: str = Field(..., description="Communication of observational understanding of any actions required.")
+    node_name: str = Field(
+        "NONE", description="Selection of a node of highest priorityfor which to perform an action on."
+    )
+
+
 SYSTEM_MSG = "You are a cybersecurity network defence agent. Your mission is to protect a network against offensive attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols. The current link traffic is displayed as a percentage of its total bandwidth, for each possible protocol. An attacker is trying to compromise the network, by either directly incapacitating the nodes HARDWARE, SOFTWARE or FILE_SYSTEM states, or indirectly overwhelming the nodes through Denial-of-Service type attacks.\n"
 
 HISTORY_PREFIX = "This is the history of offensive action observations and defensive actions you have taken at each step. If nothing happened at a specific step, it is omitted from the history.\n"
@@ -35,12 +41,31 @@ HISTORY_PREFIX = "This is the history of offensive action observations and defen
 CURRENT_OBS = """Here is an overview of the current observation space:
 {obs_view_full}
 Changes that have occured since last observation are: {obs_diff} """
-NODE_ACTION_SPACE_DESCRIPTION = """
-As an agent, you are able to influence the state of nodes by switching them off or resetting them and patching operating systems and services. Every turn, you may choose to take an action on one of the nodes. If choosing not to take any action, return NONE. Note that actions are expensive and can negatively impact the environment if used improperly. For instance, a server which is turned off cannot receive requests from the users and will decrease the reward.  
 
-Before taking the action, provide a quick explanation for your reason given the observation space provided.
 
-If choosing to take an action, you must select a node by name from the following list: {node_names}. Always take note of any action constraints outlined in the description provided.
+REASON_ACTION_SPACE_NODE_SELECT = """
+This is the initial configuration of the network:
+{network_connectivity_desc}
+
+Initial
+{initial_obs_view_full}
+
+This is the history of offensive action observations and defensive actions you have taken at each step. If nothing happened at a specific step, it is omitted from the history:
+{obs_act_history}
+
+Here is an overview of the current observation space:
+{current_obs_view_full}
+Changes that have occured since last observation are:
+{current_obs_diff}
+
+As an agent, you are able to influence the state of nodes by switching them off or resetting them and patching operating systems and services. You must reason over the state of the network and historical observations provided, using this to inform which node if any to take an action on.
+If action is not required at the moment, set NONE as the node_name, but always reason over the state of the network.
+Note that actions are expensive and can negatively impact the environment if used improperly. For instance, a server which is turned off cannot receive requests from the users and will decrease the reward.  
+
+If choosing to take an action, you must select a node by name from the following list: {node_names}.
+
+
+For your information, the following actions are available for selection later. Always take note of any action constraints outlined in the description provided.
 
 ## HARDWARE Actions:
 Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'TURN_ON'}}
@@ -62,11 +87,60 @@ The following actions are only applicable if the node owns services. If choosing
 Action: {{'node_name':'NODE_NAME', 'node_property':'SERVICE', 'property_action':'PATCH', 'service_name':'SERVICE_NAME'}}
 Description: Patches the service for a number of steps, after which the status of the service returns to 'GOOD'.
 
+Your output should be in the following format:
+{{'reasoning': 'Reason for node selection', 'node_name': 'NODE_NAME'}}
+Reasoning and node selection: 
 """
 
-ACTION_PROMPT = """
-Please take a suitable action.
-Action: """
+NODE_ACTION_SELECTION = """
+This is the initial configuration of the network:
+{network_connectivity_desc}
+
+Initial
+{initial_obs_view_full}
+
+This is the history of offensive action observations and defensive actions you have taken at each step. If nothing happened at a specific step, it is omitted from the history:
+{obs_act_history}
+
+Here is an overview of the current observation space:
+{current_obs_view_full}
+Changes that have occured since last observation are:
+{current_obs_diff}
+
+You have already thought about the information provided above, and have made the decision to take an action on {node_name} due to the following reasoning:
+{reasoning}
+
+As an agent, you are able to influence the state of this node by switching it on or off, resetting it, patching software or patching any of its services.
+
+Your task is to use an action from the given list of possible actions.
+Always take note of any action constraints outlined in the description provided.
+
+## HARDWARE Actions:
+Action: {{'node_name':'{node_name}', 'node_property':'HARDWARE', 'property_action':'TURN_ON'}}
+Description: If it is currently off, will turn it on.
+
+Action: {{'node_name':'{node_name}', 'node_property':'HARDWARE', 'property_action':'TURN_OFF'}}
+Description: If it is currently on, will turn it off.
+
+Action: {{'node_name':'{node_name}', 'node_property':'HARDWARE', 'property_action':'RESET'}}
+Description: Resets the hardware after a number of steps. Only works if the node is turned on. Resets the status of the software, file system and services back to 'GOOD'.
+
+## SOFTWARE Actions:
+Action: {{'node_name':'{node_name}', 'node_property':'SOFTWARE', 'property_action':'PATCH'}}
+Description: Patches the software for a number of steps, after which the status of software returns to 'GOOD'.
+
+## SERVICE Actions:
+The following actions are only applicable if {node_name} owns services. If choosing to take a SERVICE property_action, you must select the SERVICE by name from the following list: {service_names}. Be sure to check that the node uses this service. Assuming {node_name}'s service name is 'SERVICE_NAME', the following are service actions you can take: 
+
+Action: {{'node_name':'{node_name}', 'node_property':'SERVICE', 'property_action':'PATCH', 'service_name':'SERVICE_NAME'}}
+Description: Patches the service for a number of steps, after which the status of the service returns to 'GOOD'.
+
+Please take a suitable action on the given node.
+Action: 
+"""
+
+THOUGHT_NODE_PROMPT = """
+Please think about the network configuration and the state of each node. Think about which nodes are most vulnerable to attack and which node requires action the most in order to stop the attack and prevent further spread. Provide your thought statement and select a node by name to perform a defensive action on. If no action is required because all is well, you can simply say 'NONE', but still always provide a thought statement."""
 
 
 # (JOHN) - File system action descriptions incase we want to use them again in the future.
