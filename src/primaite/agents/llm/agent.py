@@ -10,7 +10,7 @@ from text_generation.types import Grammar, GrammarType
 from primaite import getLogger
 from primaite.action import NodeAction
 from primaite.agents.agent_abc import AgentSessionABC
-from primaite.agents.llm.utils import network_connectivity_desc, obs_diff, obs_view_full
+from primaite.agents.llm.utils import network_connectivity_desc, obs_diff, obs_view_full, get_obs_act_history_str
 from primaite.common.enums import AgentFramework, AgentIdentifier
 from primaite.environment.env_state import EnvironmentState
 from primaite.environment.primaite_env import Primaite
@@ -20,15 +20,17 @@ from primaite.agents.llm.prompting import (
     SYSTEM_MSG,
     REASON_ACTION_SPACE_NODE_SELECT,
     NODE_ACTION_SELECTION,
+    ACTION_INFO,
     AgentReasoningNodeSelection,
     AgentNodeAction,
 )
 
 _LOGGER: Logger = getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
+MAX_PROMPT_OBS_HISTORY = 20
 
 
-def format_llama_prompt(system: str, messages: list[tuple[Literal["user", "assistant"], str]]) -> str:
+def format_llama_prompt(system: str, messages: List[Tuple[Literal["user", "assistant"], str]]) -> str:
     prompt = "<|begin_of_text|>"
 
     # system prompt
@@ -52,9 +54,7 @@ class LLM:
     def __init__(self, base_url: str, timeout: int = 60) -> None:
         self.client = Client(base_url=base_url, timeout=timeout)
 
-    def generate(
-        self, prompt: str, repetition_penalty: Optional[float] = None, max_new_tokens: Optional[int] = 1024
-    ) -> str:
+    def generate(self, prompt: str, repetition_penalty: Optional[float] = None, max_new_tokens: int = 1024) -> str:
         response = self.client.generate(
             prompt=prompt, max_new_tokens=max_new_tokens, repetition_penalty=repetition_penalty
         )
@@ -65,7 +65,7 @@ class LLM:
         prompt: str,
         model: Type[T],
         repetition_penalty: Optional[float] = None,
-        max_new_tokens: Optional[int] = 1024,
+        max_new_tokens: int = 1024,
         new_literals: Optional[Dict[str, List]] = None,
     ) -> T:
 
@@ -109,25 +109,9 @@ class LLM:
         node_names = "'" + ", ".join([n.name for n in env.active_nodes]) + "'"  # Nice comma separated list
         service_names = "'" + ", ".join(env.services_list) + "'"
 
-        # Build the history of actions
-        obs_act_history = "" if env_history else "NO OBSERVATION HISTORY"
-        history_list = []
-        for i, state in enumerate(env_history[1:]):
-            observed_changes = obs_diff(state)
-            action_id = state.action_id
-
-            if observed_changes != "" or action_id:
-                history_list.append(f"\nStep {i}:")
-
-                if observed_changes != "":
-                    history_list[-1] += f"\n{observed_changes}"
-
-                if action_id is not None:
-                    action = NodeAction.from_id(env=env, action_id=action_id)
-                    action_verbose = action.verbose(colored=False)
-                    history_list[-1] += f"\nAction: {action_verbose}\n"
-
-        obs_act_history += "".join(history_list[-20:])  # Only show up to the last 20 obs act events to avoid cloggage
+        obs_act_history = get_obs_act_history_str(
+            env_history=env_history, env=env_state.env, max_history=MAX_PROMPT_OBS_HISTORY
+        )
 
         # Current observation space changes
         _LOGGER.info(f"{colored('Observed changes', 'yellow')}: {obs_diff(env_state)}\n\n")
@@ -140,9 +124,10 @@ class LLM:
             obs_act_history=obs_act_history,
             current_obs_view_full=obs_view_full(env_state),
             current_obs_diff=obs_diff(env_state),
+            action_info=ACTION_INFO,
         )
-        messages = [("user", prompt)]
-        prompt = format_llama_prompt(SYSTEM_MSG, messages)
+        messages: List[Tuple[Literal["user", "assistant"], str]] = [("user", prompt)]
+        prompt = format_llama_prompt(system=SYSTEM_MSG, messages=messages)
 
         return prompt
 
@@ -156,24 +141,9 @@ class LLM:
         initial_state = env_history[0]
         service_names = "'" + ", ".join(env.services_list) + "'"
 
-        # Build the history of actions
-        obs_act_history = "" if env_history else "NO OBSERVATION HISTORY"
-        history_list = []
-        for i, state in enumerate(env_history[1:]):
-            observed_changes = obs_diff(state)
-            action_id = state.action_id
-
-            if observed_changes != "" or action_id:
-                history_list.append(f"\nStep {i}:")
-
-                if observed_changes != "":
-                    history_list[-1] += f"\n{observed_changes}"
-
-                if action_id is not None:
-                    action = NodeAction.from_id(env=env, action_id=action_id)
-                    action_verbose = action.verbose(colored=False)
-                    history_list[-1] += f"\nAction: {action_verbose}\n"
-        obs_act_history += "".join(history_list[-20:])  # Only show up to the last 20 obs act events to avoid cloggage
+        obs_act_history = get_obs_act_history_str(
+            env_history=env_history, env=env_state.env, max_history=MAX_PROMPT_OBS_HISTORY
+        )
 
         prompt = NODE_ACTION_SELECTION.format(
             node_name=node_name,
@@ -184,8 +154,10 @@ class LLM:
             current_obs_view_full=obs_view_full(env_state),
             current_obs_diff=obs_diff(env_state),
             service_names=service_names,
+            action_info=ACTION_INFO,
         )
         messages = [("user", prompt)]
+        messages: List[Tuple[Literal["user", "assistant"], str]] = [("user", prompt)]
         prompt = format_llama_prompt(SYSTEM_MSG, messages)
 
         return prompt

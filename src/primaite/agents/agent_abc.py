@@ -231,7 +231,7 @@ class AgentSessionABC(ABC):
         pass
 
     def _calculate_action_info(self, obs: np.ndarray) -> tuple[int, str | None, str | None]:
-        return self._calculate_action(obs), None
+        return self._calculate_action(obs), None, None
 
     @abstractmethod
     def learn(

@@ -13,6 +13,7 @@ import streamlit as st
 from primaite.action import NodeAction
 from primaite.environment.env_state import EnvironmentState
 from primaite.common.enums import NodePropertyAction
+from primaite.primaite_session import AgentIdentifier
 
 
 def display_env_state(env_state: EnvironmentState):
@@ -37,7 +38,10 @@ def display_env_state(env_state: EnvironmentState):
                 action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
             except Exception:
                 pass
-            if action.node_property != NodePropertyAction.NONE:
+            if (
+                action.node_property != NodePropertyAction.NONE
+                and env_state.env.agent_identifier == AgentIdentifier.LLM
+            ):
                 st.markdown(f"**:blue[Reasoning:]** {str(env_state.reasoning)}")
 
             action_verbose = action.verbose(colored=True)
@@ -45,5 +49,5 @@ def display_env_state(env_state: EnvironmentState):
 
             if env_state.prompt is not None:
                 with st.expander("Info"):
-                    st.markdown(f"{env_state.prompt}")  # HTML to stop markdown parsing
+                    st.markdown(f"{env_state.prompt}")
             st.divider()

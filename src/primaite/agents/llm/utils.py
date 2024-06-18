@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 
 from primaite.environment.env_state import EnvironmentState
+from primaite.environment.primaite_env import Primaite
+from primaite.action import NodeAction
 
 HARDWARE_STATE: Dict[int, str] = {0: "none", 1: "on", 2: "off", 3: "resetting", 4: "shutting down", 5: "booting"}
 SOFTWARE_STATE: Dict[int, str] = {0: "none", 1: "good", 2: "patching", 3: "compromised", 4: "overwhelmed"}
@@ -117,3 +119,31 @@ def nodelink_to_understandable(
         readable_link_obs.append(list(link[num_services + 1 :]))
 
     return readable_node_obs, readable_link_obs
+
+
+def get_obs_act_history_str(env_history: List[EnvironmentState], env: Primaite, max_history: int = 20) -> str:
+    """Builds the observation history string used in LLM agent prompts. Uses the latest N in the history"""
+    # Build the history of actions
+    obs_act_history = "" if env_history else "NO OBSERVATION HISTORY"
+    history_list = []
+
+    for i, state in enumerate(env_history[1:]):
+        observed_changes = obs_diff(state)
+        action_id = state.action_id
+
+        if observed_changes != "" or action_id:
+            history_list.append(f"\nStep {i}:")
+
+            if observed_changes != "":
+                history_list[-1] += f"\n{observed_changes}"
+
+            if action_id is not None:
+                action = NodeAction.from_id(env=env, action_id=action_id)
+                action_verbose = action.verbose(colored=False)
+                history_list[-1] += f"\nAction: {action_verbose}\n"
+
+    obs_act_history += "".join(
+        history_list[-max_history:]
+    )  # Only show up to the last 20 obs act events to avoid cloggage
+
+    return obs_act_history

@@ -11,7 +11,7 @@ import streamlit as st
 from environment import display_env_state, EnvironmentState
 from streamlit import session_state as state
 
-from primaite.primaite_session import PrimaiteSession
+from primaite.primaite_session import PrimaiteSession, AgentIdentifier
 
 st.set_page_config(layout="wide")
 
@@ -152,7 +152,13 @@ if state.agent is not None:
             env_view.empty()
 
             # Run simulation
-            action, prompt, reasoning = agent._calculate_action_info(obs)
+            print(env.agent_identifier)
+            prompt = None
+            reasoning = None
+            if env.agent_identifier == AgentIdentifier.LLM:
+                action, prompt, reasoning = agent._calculate_action_info(obs)
+            else:
+                action, _, _ = agent._calculate_action_info(obs)
             obs, rewards, done, _ = env.step(action)
             state.total_reward += rewards
 

@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 from termcolor import colored
 from primaite.action import NodeAction
 from primaite.environment import Primaite
-from primaite.environment.env_state import EnvironmentState
 
 
 class AgentNodeAction(BaseModel):
@@ -30,7 +29,7 @@ class AgentNodeAction(BaseModel):
 class AgentReasoningNodeSelection(BaseModel):
     reasoning: str = Field(..., description="Communication of observational understanding of any actions required.")
     node_name: str = Field(
-        "NONE", description="Selection of a node of highest priorityfor which to perform an action on."
+        "NONE", description="Selection of a node of highest priority for which to perform an action on."
     )
 
 
@@ -63,25 +62,7 @@ If choosing to take an action, you must select a node by name from the following
 
 For your information, the following actions are available for selection later. Always take note of any action constraints outlined in the description provided.
 
-## HARDWARE Actions:
-Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'TURN_ON'}}
-Description: If it is currently off, will turn it on.
-
-Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'TURN_OFF'}}
-Description: If it is currently on, will turn it off.
-
-Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'RESET'}}
-Description: Resets the hardware after a number of steps. Only works if the node is turned on. Resets the status of the software, file system and services back to 'GOOD'.
-
-## SOFTWARE Actions:
-Action: {{'node_name':'NODE_NAME', 'node_property':'SOFTWARE', 'property_action':'PATCH'}}
-Description: Patches the software for a number of steps, after which the status of software returns to 'GOOD'.
-
-## SERVICE Actions:
-The following actions are only applicable if the node owns services. If choosing to take a SERVICE action, you must select the SERVICE by name from the following list: {service_names}. Be mindful that a node may own only a subset of these services. Assuming the selected service name is 'SERVICE_NAME', the following are service actions you can take: 
-
-Action: {{'node_name':'NODE_NAME', 'node_property':'SERVICE', 'property_action':'PATCH', 'service_name':'SERVICE_NAME'}}
-Description: Patches the service for a number of steps, after which the status of the service returns to 'GOOD'.
+{action_info}
 
 Your output should be in the following format:
 {{'reasoning': 'Reason for node selection', 'node_name': 'NODE_NAME'}}
@@ -111,22 +92,7 @@ As an agent, you are able to influence the state of this node by switching it on
 Your task is to use an action from the given list of possible actions.
 Always take note of any action constraints outlined in the description provided.
 
-## HARDWARE Actions:
-Action: {{'node_name':'{node_name}', 'node_property':'HARDWARE', 'property_action':'TURN_ON'}}
-Description: If it is currently off, will turn it on.
-
-Action: {{'node_name':'{node_name}', 'node_property':'HARDWARE', 'property_action':'TURN_OFF'}}
-Description: If it is currently on, will turn it off.
-
-Action: {{'node_name':'{node_name}', 'node_property':'HARDWARE', 'property_action':'RESET'}}
-Description: Resets the hardware after a number of steps. Only works if the node is turned on. Resets the status of the software, file system and services back to 'GOOD'.
-
-## SOFTWARE Actions:
-Action: {{'node_name':'{node_name}', 'node_property':'SOFTWARE', 'property_action':'PATCH'}}
-Description: Patches the software for a number of steps, after which the status of software returns to 'GOOD'.
-
-## SERVICE Actions:
-The following actions are only applicable if {node_name} owns services. If choosing to take a SERVICE property_action, you must select the SERVICE by name from the following list: {service_names}. Be sure to check that the node uses this service. Assuming {node_name}'s service name is 'SERVICE_NAME', the following are service actions you can take: 
+{action_info}
 
 Action: {{'node_name':'{node_name}', 'node_property':'SERVICE', 'property_action':'PATCH', 'service_name':'SERVICE_NAME'}}
 Description: Patches the service for a number of steps, after which the status of the service returns to 'GOOD'.
@@ -135,7 +101,25 @@ Please take a suitable action on the given node.
 Action: 
 """
 
+ACTION_INFO = """## HARDWARE Actions:
+Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'TURN_ON'}}
+Description: If it is currently off, will turn it on.
 
+Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'TURN_OFF'}}
+Description: If it is currently on, will turn it off.
+
+Action: {{'node_name':'NODE_NAME', 'node_property':'HARDWARE', 'property_action':'RESET'}}
+Description: Resets the hardware after a number of steps. Only works if the node is turned on. Resets the status of the software, file system and services back to 'GOOD'.
+
+## SOFTWARE Actions:
+Action: {{'node_name':'NODE_NAME', 'node_property':'SOFTWARE', 'property_action':'PATCH'}}
+Description: Patches the software for a number of steps, after which the status of software returns to 'GOOD'.
+
+## SERVICE Actions:
+The following actions are only applicable if the node owns services. If choosing to take a SERVICE action, you must select the SERVICE by name from the following list: {service_names}. Be mindful that a node may own only a subset of these services. Assuming the selected service name is 'SERVICE_NAME', the following are service actions you can take: 
+
+Action: {{'node_name':'NODE_NAME', 'node_property':'SERVICE', 'property_action':'PATCH', 'service_name':'SERVICE_NAME'}}
+Description: Patches the service for a number of steps, after which the status of the service returns to 'GOOD'."""
 # (JOHN) - File system action descriptions incase we want to use them again in the future.
 # ## FILE_SYSTEM Actions:
 # Action: {{'node_name':'NODE_NAME', 'node_property':'FILE_SYSTEM', 'property_action':'SCAN'}}
