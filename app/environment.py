@@ -22,9 +22,7 @@ def display_env_state(env_state: EnvironmentState):
         st.table(env_state.nodes_table)
         col_net, col_links = st.columns([3, 2])
         with col_links:
-            st.table(
-                env_state.traffic_table
-            )
+            st.table(env_state.traffic_table)
         with col_net:
             fig = env_state.display_network()
             st.pyplot(fig)
@@ -35,7 +33,10 @@ def display_env_state(env_state: EnvironmentState):
 
         if env_state.action_id is not None:
             st.write("**:blue[Blue Agent:]**")
-            action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
+            try:
+                action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
+            except Exception:
+                pass
             if action.node_property != NodePropertyAction.NONE:
                 st.markdown(f"**:blue[Reasoning:]** {str(env_state.reasoning)}")
 
