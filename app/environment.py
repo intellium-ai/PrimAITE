@@ -24,7 +24,7 @@ def display_env_state(env_state: EnvironmentState):
         with col_links:
             st.table(
                 env_state.traffic_table
-            )  # what the fuck is going on with the observation space changes and the LLM seeing these changes until the next step? Shits bugged...
+            )
         with col_net:
             fig = env_state.display_network()
             st.pyplot(fig)
