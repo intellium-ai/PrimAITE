@@ -94,7 +94,6 @@ Always take note of any action constraints outlined in the description provided.
 
 {action_info}
 
-Action: {{'node_name':'{node_name}', 'node_property':'SERVICE', 'property_action':'PATCH', 'service_name':'SERVICE_NAME'}}
 Description: Patches the service for a number of steps, after which the status of the service returns to 'GOOD'.
 
 Please take a suitable action on the given node.
