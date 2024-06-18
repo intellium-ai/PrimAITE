@@ -152,7 +152,6 @@ if state.agent is not None:
             env_view.empty()
 
             # Run simulation
-            print(env.agent_identifier)
             prompt = None
             reasoning = None
             if env.agent_identifier == AgentIdentifier.LLM:
