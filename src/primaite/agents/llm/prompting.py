@@ -36,13 +36,6 @@ class AgentReasoningNodeSelection(BaseModel):
 
 SYSTEM_MSG = "You are a cybersecurity network defence agent. Your mission is to protect a network against offensive attacks. You have a limited view of the network environment, known as an observation space. The network is made up of nodes (e.g. computers, switches) and links between some of the nodes, through which information is transmitted using standard protocols. The current link traffic is displayed as a percentage of its total bandwidth, for each possible protocol. An attacker is trying to compromise the network, by either directly incapacitating the nodes HARDWARE, SOFTWARE or FILE_SYSTEM states, or indirectly overwhelming the nodes through Denial-of-Service type attacks.\n"
 
-HISTORY_PREFIX = "This is the history of offensive action observations and defensive actions you have taken at each step. If nothing happened at a specific step, it is omitted from the history.\n"
-
-CURRENT_OBS = """Here is an overview of the current observation space:
-{obs_view_full}
-Changes that have occured since last observation are: {obs_diff} """
-
-
 REASON_ACTION_SPACE_NODE_SELECT = """
 This is the initial configuration of the network:
 {network_connectivity_desc}
@@ -58,7 +51,10 @@ Here is an overview of the current observation space:
 Changes that have occured since last observation are:
 {current_obs_diff}
 
-As an agent, you are able to influence the state of nodes by switching them off or resetting them and patching operating systems and services. You must reason over the state of the network and historical observations provided, using this to inform which node if any to take an action on.
+As an agent, you are able to influence the state of this node by switching it on or off, resetting it, patching software or patching any of its services.
+
+Please think about the network configuration and the state of each node. Think about which nodes are most vulnerable to attack and which node requires action the most in order to stop the attack and prevent further spread. Provide your reasoning statement and select a node by name to perform a defensive action on. If no action is required because all is well, you can simply say 'NONE', but always provide a reasoning statement.
+
 If action is not required at the moment, set NONE as the node_name, but always reason over the state of the network.
 Note that actions are expensive and can negatively impact the environment if used improperly. For instance, a server which is turned off cannot receive requests from the users and will decrease the reward.  
 
@@ -138,9 +134,6 @@ Description: Patches the service for a number of steps, after which the status o
 Please take a suitable action on the given node.
 Action: 
 """
-
-THOUGHT_NODE_PROMPT = """
-Please think about the network configuration and the state of each node. Think about which nodes are most vulnerable to attack and which node requires action the most in order to stop the attack and prevent further spread. Provide your thought statement and select a node by name to perform a defensive action on. If no action is required because all is well, you can simply say 'NONE', but still always provide a thought statement."""
 
 
 # (JOHN) - File system action descriptions incase we want to use them again in the future.

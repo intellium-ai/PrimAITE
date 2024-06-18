@@ -24,9 +24,12 @@ class EnvironmentState:
         env: Primaite,
         prev_env_state: EnvironmentState | None = None,
         action_id: int | None = None,
-        info: str | None = None,
+        prompt: str | None = None,
+        reasoning: str | None = None,
     ):
-        self.info = info
+
+        self.prompt = prompt
+        self.reasoning = reasoning
         self.action_id = action_id
         self.env = env
         self.nodes = copy.deepcopy(env.nodes)

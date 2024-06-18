@@ -12,6 +12,7 @@ import streamlit as st
 
 from primaite.action import NodeAction
 from primaite.environment.env_state import EnvironmentState
+from primaite.common.enums import NodePropertyAction
 
 
 def display_env_state(env_state: EnvironmentState):
@@ -21,7 +22,9 @@ def display_env_state(env_state: EnvironmentState):
         st.table(env_state.nodes_table)
         col_net, col_links = st.columns([3, 2])
         with col_links:
-            st.table(env_state.traffic_table)
+            st.table(
+                env_state.traffic_table
+            )  # what the fuck is going on with the observation space changes and the LLM seeing these changes until the next step? Shits bugged...
         with col_net:
             fig = env_state.display_network()
             st.pyplot(fig)
@@ -33,10 +36,13 @@ def display_env_state(env_state: EnvironmentState):
         if env_state.action_id is not None:
             st.write("**:blue[Blue Agent:]**")
             action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
+            if action.node_property != NodePropertyAction.NONE:
+                st.markdown(f"**:blue[Reasoning:]** {str(env_state.reasoning)}")
+
             action_verbose = action.verbose(colored=True)
             st.markdown(action_verbose)
 
-            if env_state.info is not None:
+            if env_state.prompt is not None:
                 with st.expander("Info"):
-                    st.markdown(f"{env_state.info}")  # HTML to stop markdown parsing
+                    st.markdown(f"{env_state.prompt}")  # HTML to stop markdown parsing
             st.divider()

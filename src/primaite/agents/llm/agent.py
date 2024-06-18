@@ -1,8 +1,7 @@
 import json
-from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
-from typing import Any, Literal, Optional, Type, TypeVar, Dict, List
+from typing import Any, Literal, Optional, Type, TypeVar, Dict, List, Tuple
 from termcolor import colored
 import numpy as np
 from pydantic import BaseModel
@@ -191,7 +190,7 @@ class LLM:
 
         return prompt
 
-    def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]):
+    def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]) -> Tuple[int, str, str]:
         env = env_state.env
 
         # Think and decide which node to act on
@@ -223,13 +222,12 @@ class LLM:
                 _LOGGER.info(f"Invalid LLM action: {agent_action}")
                 action = NodeAction(env=env)
 
-        # LLM chose to take no action
+        # When the LLM chose to take no action
         else:
-            action = NodeAction(env=env)  # Does this count as 'no action'?
+            action = NodeAction(env=env)
 
         action_id = action.action_id
-        prompt
-        return action_id, prompt
+        return action_id, prompt, reasoning
 
 
 class LLMAgent(AgentSessionABC):
@@ -263,19 +261,19 @@ class LLMAgent(AgentSessionABC):
         _LOGGER.warning("Deterministic agents cannot learn")
 
     def _calculate_action(self, obs: np.ndarray):
-        action, info = self._calculate_action_info(obs)
+        action, prompt, reasoning = self._calculate_action_info(obs)
 
         return action
 
-    def _calculate_action_info(self, obs: np.ndarray) -> tuple[int, str | None]:
+    def _calculate_action_info(self, obs: np.ndarray) -> tuple[int, str | None, str | None]:
         prev_env_state = self.env_history[-1]
         env_state = EnvironmentState(self._env, prev_env_state=prev_env_state)
 
-        action, info = self._agent.predict(env_state, self.env_history)
+        action, prompt, reasoning = self._agent.predict(env_state, self.env_history)
         env_state.action_id = action
         self.env_history.append(env_state)
 
-        return action, info
+        return action, prompt, reasoning
 
     def evaluate(
         self,
