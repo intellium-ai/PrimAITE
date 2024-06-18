@@ -28,9 +28,12 @@ def display_env_state(env_state: EnvironmentState):
     with col_agent:
         if env_state.action_id is not None:
             st.write("**:blue[Blue Agent:]**")
-            action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
-            action_verbose = action.verbose(colored=True)
-            st.markdown(action_verbose)
+            try:
+                action = NodeAction.from_id(env=env_state.env, action_id=env_state.action_id)
+                action_verbose = action.verbose(colored=True)
+                st.markdown(action_verbose)
+            except Exception:
+                pass
 
             if env_state.info is not None:
                 with st.expander("Info"):
