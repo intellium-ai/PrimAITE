@@ -124,7 +124,7 @@ class LLM:
             obs_act_history=obs_act_history,
             current_obs_view_full=obs_view_full(env_state),
             current_obs_diff=obs_diff(env_state),
-            action_info=ACTION_INFO,
+            action_info=ACTION_INFO.format(service_names=service_names),
         )
         messages: List[Tuple[Literal["user", "assistant"], str]] = [("user", prompt)]
         prompt = format_llama_prompt(system=SYSTEM_MSG, messages=messages)
@@ -153,8 +153,7 @@ class LLM:
             obs_act_history=obs_act_history,
             current_obs_view_full=obs_view_full(env_state),
             current_obs_diff=obs_diff(env_state),
-            service_names=service_names,
-            action_info=ACTION_INFO,
+            action_info=ACTION_INFO.format(service_names=service_names),
         )
         messages = [("user", prompt)]
         messages: List[Tuple[Literal["user", "assistant"], str]] = [("user", prompt)]

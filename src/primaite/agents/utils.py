@@ -424,7 +424,10 @@ def transform_action_node_enum(action: List[Union[str, int]]) -> List[int]:
     if action[1] == "OPERATING":
         property_action = NodeHardwareAction[str(action[2])].value
     elif action[1] == "OS" or action[1] == "SERVICE":
-        property_action = NodeSoftwareAction[str(action[2])].value
+        property_action = NodeSoftwareAction[
+            str(action[2])
+        ].value  # added if because for some reason they made this enum patch but pass patching for hardcoded agent only...
+
     else:
         property_action = 0
 
