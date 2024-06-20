@@ -157,6 +157,7 @@ if state.agent is not None:
             if env.agent_identifier == AgentIdentifier.LLM:
                 action, prompt, reasoning = agent._calculate_action_info(obs)
             else:
+
                 action, _, _ = agent._calculate_action_info(obs)
             obs, rewards, done, _ = env.step(action)
             state.total_reward += rewards

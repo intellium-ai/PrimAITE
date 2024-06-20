@@ -15,7 +15,7 @@ from primaite.pol.ier import IER
 
 _LOGGER = getLogger(__name__)
 
-_VERBOSE: bool = False
+_VERBOSE: bool = True
 
 
 def apply_red_agent_iers(
@@ -133,6 +133,9 @@ def apply_red_agent_iers(
                         + ", port: "
                         + port
                     )
+                    print(
+                        f"ACL is blocking an IER from {source_node.ip_address} to {dest_node.ip_address} on port {port} for {protocol}"
+                    )
             else:
                 if _VERBOSE:
                     print("No ACL block")
@@ -203,7 +206,9 @@ def apply_red_agent_iers(
             else:
                 if _VERBOSE:
                     print("Red IER was NOT allowed to run in step " + str(step))
-                    print("Source, Dest or ACL were not valid")
+                    print(
+                        f"Source, Dest or ACL were not valid, source {source_valid} dest {dest_valid}, acl {acl_block}"
+                    )
                 pass
             # ------------------------------------
         else:

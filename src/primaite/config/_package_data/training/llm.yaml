@@ -30,7 +30,7 @@ agent_identifier: LLM
 # Options are:
 # True
 # False
-random_red_agent: True
+random_red_agent: False
 
 # The (integer) seed to be used in random number generation
 # Default is None (null)
@@ -40,7 +40,7 @@ seed: null
 # Options are:
 # True
 # False
-deterministic: False
+deterministic: True
 
 # Sets what view of the environment the deterministic hardcoded agent has. The default is BASIC.
 # Options are:
@@ -74,7 +74,7 @@ num_train_steps: 256
 num_eval_episodes: 1
 
 # Number of time_steps for evaluation per episode
-num_eval_steps: 256
+num_eval_steps: 8
 
 # Sets how often the agent will save a checkpoint (every n time episodes).
 # Set to 0 if no checkpoints are required. Default is 10

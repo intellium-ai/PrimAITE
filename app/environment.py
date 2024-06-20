@@ -17,6 +17,16 @@ from primaite.primaite_session import AgentIdentifier
 
 
 def display_env_state(env_state: EnvironmentState):
+    """
+    Displays the environment state
+
+    Args:
+        env_state (EnvironmentState): The environment state to display
+
+    Returns:
+        None
+    """
+
     col_agent, col_env = st.columns([3, 5], gap="medium")
     with col_env:
         st.write("**Environment view:**")

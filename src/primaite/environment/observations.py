@@ -1,5 +1,7 @@
 # © Crown-owned copyright 2023, Defence Science and Technology Laboratory UK
 """Module for handling configurable observation spaces in PrimAITE."""
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from logging import Logger
@@ -676,7 +678,7 @@ class ObservationsHandler:
             return self._observation
 
     @classmethod
-    def from_config(cls, env: "Primaite", obs_space_config: dict) -> "ObservationsHandler":
+    def from_config(cls, env: "Primaite", obs_space_config: dict) -> ObservationsHandler:
         """
         Parse a config dictinary, return a new observation handler populated with new observation component objects.
 

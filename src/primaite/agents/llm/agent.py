@@ -162,6 +162,13 @@ class LLM:
         return prompt
 
     def predict(self, env_state: EnvironmentState, env_history: list[EnvironmentState]) -> Tuple[int, str, str]:
+
+        ## KILL IT
+        action = NodeAction(env=env_state.env)
+
+        action_id = action.action_id
+        return action_id, None, None
+
         env = env_state.env
 
         # Think and decide which node to act on

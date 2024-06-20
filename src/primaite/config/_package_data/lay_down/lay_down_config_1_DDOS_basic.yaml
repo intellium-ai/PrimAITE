@@ -124,8 +124,8 @@
   mission_criticality: 5
 - item_type: RED_POL
   id: '14'
-  start_step: 50
-  end_step: 50
+  start_step: 1
+  end_step: 3
   targetNodeId: '1'
   initiator: DIRECT
   type: SERVICE
@@ -134,33 +134,57 @@
   sourceNodeId: NA
   sourceNodeService: NA
   sourceNodeServiceState: NA
-- item_type: RED_IER
-  id: '15'
-  start_step: 0
-  end_step: 100
-  load: 1000000
-  protocol: TCP
-  port: '80'
-  source: '1'
-  destination: '2'
-  mission_criticality: 0
 - item_type: RED_POL
-  id: '16'
-  start_step: 80
-  end_step: 80
-  targetNodeId: '2'
-  initiator: IER
+  id: '15'
+  start_step: 2
+  end_step: 4
+  targetNodeId: '1'
+  initiator: DIRECT
   type: SERVICE
   protocol: TCP
   state: COMPROMISED
   sourceNodeId: NA
   sourceNodeService: NA
   sourceNodeServiceState: NA
-- item_type: ACL_RULE
+- item_type: RED_POL
+  id: '16'
+  start_step: 2
+  end_step: 4
+  targetNodeId: '3'
+  initiator: DIRECT
+  type: SERVICE
+  protocol: TCP
+  state: COMPROMISED
+  sourceNodeId: NA
+  sourceNodeService: NA
+  sourceNodeServiceState: NA
+- item_type: RED_IER
   id: '17'
+  start_step: 0
+  end_step: 100
+  load: 999900000
+  protocol: TCP
+  port: '80'
+  source: '1'
+  destination: '4'
+  mission_criticality: 0
+- item_type: ACL_RULE
+  id: '18'
   permission: ALLOW
   source: ANY
   destination: ANY
   protocol: ANY
   port: ANY
   position: 0
+# - item_type: RED_POL
+#   id: '16'
+#   start_step: 80
+#   end_step: 80
+#   targetNodeId: '2'
+#   initiator: IER
+#   type: SERVICE
+#   protocol: TCP
+#   state: COMPROMISED
+#   sourceNodeId: NA
+#   sourceNodeService: NA
+#   sourceNodeServiceState: NA

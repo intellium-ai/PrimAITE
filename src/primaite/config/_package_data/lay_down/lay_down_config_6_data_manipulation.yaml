@@ -198,146 +198,6 @@
   bandwidth: 1000000000
   source: '6'
   destination: '9'
-- item_type: GREEN_IER
-  id: '19'
-  start_step: 1
-  end_step: 256
-  load: 10000
-  protocol: TCP
-  port: '80'
-  source: '1'
-  destination: '7'
-  mission_criticality: 5
-- item_type: GREEN_IER
-  id: '20'
-  start_step: 1
-  end_step: 256
-  load: 10000
-  protocol: TCP
-  port: '80'
-  source: '7'
-  destination: '1'
-  mission_criticality: 5
-- item_type: GREEN_IER
-  id: '21'
-  start_step: 1
-  end_step: 256
-  load: 10000
-  protocol: TCP
-  port: '80'
-  source: '2'
-  destination: '7'
-  mission_criticality: 5
-- item_type: GREEN_IER
-  id: '22'
-  start_step: 1
-  end_step: 256
-  load: 10000
-  protocol: TCP
-  port: '80'
-  source: '7'
-  destination: '2'
-  mission_criticality: 5
-- item_type: GREEN_IER
-  id: '23'
-  start_step: 1
-  end_step: 256
-  load: 5000
-  protocol: TCP_SQL
-  port: '1433'
-  source: '7'
-  destination: '8'
-  mission_criticality: 5
-- item_type: GREEN_IER
-  id: '24'
-  start_step: 1
-  end_step: 256
-  load: 100000
-  protocol: TCP_SQL
-  port: '1433'
-  source: '8'
-  destination: '7'
-  mission_criticality: 5
-- item_type: GREEN_IER
-  id: '25'
-  start_step: 1
-  end_step: 256
-  load: 50000
-  protocol: TCP
-  port: '80'
-  source: '1'
-  destination: '9'
-  mission_criticality: 2
-- item_type: GREEN_IER
-  id: '26'
-  start_step: 1
-  end_step: 256
-  load: 50000
-  protocol: TCP
-  port: '80'
-  source: '2'
-  destination: '9'
-  mission_criticality: 2
-- item_type: GREEN_IER
-  id: '27'
-  start_step: 1
-  end_step: 256
-  load: 5000
-  protocol: TCP
-  port: '80'
-  source: '5'
-  destination: '7'
-  mission_criticality: 1
-- item_type: GREEN_IER
-  id: '28'
-  start_step: 1
-  end_step: 256
-  load: 5000
-  protocol: TCP
-  port: '80'
-  source: '7'
-  destination: '5'
-  mission_criticality: 1
-- item_type: GREEN_IER
-  id: '29'
-  start_step: 1
-  end_step: 256
-  load: 5000
-  protocol: TCP
-  port: '80'
-  source: '5'
-  destination: '8'
-  mission_criticality: 1
-- item_type: GREEN_IER
-  id: '30'
-  start_step: 1
-  end_step: 256
-  load: 5000
-  protocol: TCP
-  port: '80'
-  source: '8'
-  destination: '5'
-  mission_criticality: 1
-- item_type: GREEN_IER
-  id: '31'
-  start_step: 1
-  end_step: 256
-  load: 5000
-  protocol: TCP
-  port: '80'
-  source: '5'
-  destination: '9'
-  mission_criticality: 1
-- item_type: GREEN_IER
-  id: '32'
-  start_step: 1
-  end_step: 256
-  load: 5000
-  protocol: TCP
-  port: '80'
-  source: '9'
-  destination: '5'
-  mission_criticality: 1
 - item_type: ACL_RULE
   id: '33'
   permission: ALLOW
@@ -474,109 +334,46 @@
   protocol: ANY
   port: ANY
   position: 16
-- item_type: RED_POL
+# I added this one:
+- item_type: ACL_RULE
   id: '50'
-  start_step: 50
-  end_step: 50
-  targetNodeId: '1'
-  initiator: DIRECT
-  type: SERVICE
-  protocol: UDP
-  state: COMPROMISED
-  sourceNodeId: NA
-  sourceNodeService: NA
-  sourceNodeServiceState: NA
+  permission: ALLOW
+  source: 192.168.10.11
+  destination: 192.168.10.1
+  protocol: TCP
+  port: 80
+  position: 17
 - item_type: RED_IER
   id: '51'
   start_step: 1
-  end_step: 1000
-  load: 10000
-  protocol: UDP
-  port: '53'
+  end_step: 10000
+  load: 10000000000
+  protocol: TCP
+  port: '80'
   source: '1'
-  destination: '8'
+  destination: '3'
   mission_criticality: 0
 - item_type: RED_POL
   id: '52'
-  start_step: 100
-  end_step: 100
-  targetNodeId: '8'
-  initiator: IER
+  start_step: 2
+  end_step: 2
+  targetNodeId: '4'
+  initiator: DIRECT
   type: SERVICE
-  protocol: UDP
+  protocol: TCP
   state: COMPROMISED
   sourceNodeId: NA
   sourceNodeService: NA
   sourceNodeServiceState: NA
 - item_type: RED_POL
   id: '53'
-  start_step: 105
-  end_step: 105
-  targetNodeId: '8'
-  initiator: SERVICE
-  type: FILE
-  protocol: NA
-  state: CORRUPT
-  sourceNodeId: '8'
-  sourceNodeService: UDP
-  sourceNodeServiceState: COMPROMISED
-- item_type: RED_POL
-  id: '54'
-  start_step: 105
-  end_step: 105
-  targetNodeId: '8'
-  initiator: SERVICE
-  type: SERVICE
-  protocol: TCP_SQL
-  state: COMPROMISED
-  sourceNodeId: '8'
-  sourceNodeService: UDP
-  sourceNodeServiceState: COMPROMISED
-- item_type: RED_POL
-  id: '55'
-  start_step: 125
-  end_step: 125
-  targetNodeId: '7'
-  initiator: SERVICE
-  type: SERVICE
-  protocol: TCP
-  state: OVERWHELMED
-  sourceNodeId: '8'
-  sourceNodeService: TCP_SQL
-  sourceNodeServiceState: COMPROMISED
-- item_type: RED_POL
-  id: '56'
-  start_step: 20
-  end_step: 20
-  targetNodeId: '2'
-  initiator: DIRECT
-  type: OS
-  state: COMPROMISED
-  protocol: NA
-  sourceNodeId: NA
-  sourceNodeService: NA
-  sourceNodeServiceState: NA
-- item_type: RED_POL
-  id: '57'
-  start_step: 15
-  end_step: 15
+  start_step: 2
+  end_step: 2
   targetNodeId: '3'
   initiator: DIRECT
-  type: OS
+  type: SERVICE
+  protocol: TCP
   state: COMPROMISED
-  protocol: NA
-  sourceNodeId: NA
-  sourceNodeService: NA
-  sourceNodeServiceState: NA
-- item_type: RED_POL
-  id: '58'
-  start_step: 10
-  end_step: 10
-  targetNodeId: '4'
-  initiator: DIRECT
-  type: OS
-  state: COMPROMISED
-  protocol: NA
   sourceNodeId: NA
   sourceNodeService: NA
   sourceNodeServiceState: NA

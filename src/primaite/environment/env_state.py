@@ -67,7 +67,7 @@ class EnvironmentState:
                 link_name = self.traffic_table.at[id, "Name"]
                 prev_traffic = s.iloc[0]
                 curr_traffic = s.iloc[1]
-                traffic_diff = int(curr_traffic - prev_traffic)
+                traffic_diff = curr_traffic - prev_traffic
                 if colors:
                     link_change_str = (
                         f":violet[{service_name}] in link :green[{link_name}] changed by :red[{traffic_diff}]."
